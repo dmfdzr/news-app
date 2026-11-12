@@ -1,9 +1,7 @@
 import fs from "node:fs"
 import path from "node:path"
-import { Readable } from "node:stream"
 
-import { isLocalMode } from "@/lib/env"
-import { streamFile } from "@/lib/google-drive"
+import { getCloudinaryImageUrl, isCloudinaryConfigured } from "@/lib/cloudinary"
 import { DRIVE_ID_PATTERN } from "@/lib/media"
 
 export const runtime = "nodejs"
@@ -46,36 +44,28 @@ export async function GET(_: Request, { params }: { params: Promise<{ fileId: st
   const { fileId } = await params
   if (!DRIVE_ID_PATTERN.test(fileId)) return new Response("Not found", { status: 404 })
 
-  if (isLocalMode) {
-    const localFilePath = path.join(LOCAL_MEDIA_DIR, `${fileId}.webp`)
-    if (fs.existsSync(localFilePath)) {
-      const buffer = fs.readFileSync(localFilePath)
-      return new Response(buffer, {
-        headers: {
-          "Content-Type": "image/webp",
-          "Cache-Control": "public, max-age=31536000, s-maxage=31536000, immutable",
-        },
-      })
-    }
-    // Return SVG placeholder for mock or missing local files
-    const svg = generateSvgPlaceholder(fileId)
-    return new Response(svg, {
-      headers: {
-        "Content-Type": "image/svg+xml",
-        "Cache-Control": "public, max-age=31536000, s-maxage=31536000, immutable",
-      },
-    })
+  if (isCloudinaryConfigured() && fileId.startsWith("cs_")) {
+    const cloudinaryUrl = getCloudinaryImageUrl(fileId)
+    return Response.redirect(cloudinaryUrl, 302)
   }
 
-  try {
-    const stream = await streamFile(fileId)
-    return new Response(Readable.toWeb(stream) as ReadableStream, {
+  const localFilePath = path.join(LOCAL_MEDIA_DIR, `${fileId}.webp`)
+  if (fs.existsSync(localFilePath)) {
+    const buffer = fs.readFileSync(localFilePath)
+    return new Response(buffer, {
       headers: {
         "Content-Type": "image/webp",
         "Cache-Control": "public, max-age=31536000, s-maxage=31536000, immutable",
       },
     })
-  } catch {
-    return new Response("Not found", { status: 404 })
   }
+
+  // Return SVG placeholder for mock or missing local files
+  const svg = generateSvgPlaceholder(fileId)
+  return new Response(svg, {
+    headers: {
+      "Content-Type": "image/svg+xml",
+      "Cache-Control": "public, max-age=31536000, s-maxage=31536000, immutable",
+    },
+  })
 }

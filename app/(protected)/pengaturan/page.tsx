@@ -10,11 +10,12 @@ export default async function SettingsPage() {
   const user = await requireUser()
   return (
     <div>
-      <h1 className="font-heading mb-6 text-3xl font-extrabold tracking-tight">Pengaturan Profil</h1>
+      <h1 className="font-heading mb-6 text-3xl font-extrabold tracking-tight">Pengaturan Akun</h1>
       <ProfileForm
         initial={{
           fullName: user.fullName,
           username: user.username,
+          email: user.email,
           bio: user.bio ?? "",
           avatarDriveId: user.avatarDriveId ?? "",
         }}

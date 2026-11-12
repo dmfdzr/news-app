@@ -7,7 +7,8 @@ import { isLocalMode } from "@/lib/env"
 import { localDb } from "@/lib/local-db"
 import { ServiceError } from "@/lib/errors"
 import { DRIVE_ID_PATTERN } from "@/lib/media"
-import { deleteFile } from "@/lib/google-drive"
+import { deleteFromCloudinary } from "@/lib/cloudinary"
+import { getSupabaseAdmin } from "@/lib/supabase/admin"
 import { prisma } from "@/lib/prisma"
 import { cardSelect, type ArticleCard } from "@/services/article.service"
 
@@ -278,7 +279,7 @@ export const userService = {
         ...(avatarChanged ? { avatarDriveId: data.avatarDriveId } : {}),
       },
     })
-    if (avatarChanged) await deleteFile(user.avatarDriveId)
+    if (avatarChanged) await deleteFromCloudinary(user.avatarDriveId)
   },
 
   listUsers() {
@@ -309,5 +310,45 @@ export const userService = {
       return
     }
     await prisma.user.update({ where: { id }, data: { role } })
+  },
+
+  async toggleVerified(id: string) {
+    if (isLocalMode) {
+      const u = localDb.getUserById(id)
+      if (!u) throw new ServiceError("Pengguna tidak ditemukan.")
+      localDb.updateUser(id, { isVerified: !u.isVerified })
+      return !u.isVerified
+    }
+    const u = await prisma.user.findUnique({ where: { id }, select: { isVerified: true } })
+    if (!u) throw new ServiceError("Pengguna tidak ditemukan.")
+    const updated = await prisma.user.update({
+      where: { id },
+      data: { isVerified: !u.isVerified },
+    })
+    return updated.isVerified
+  },
+
+  async setTrustScore(id: string, trustScore: number) {
+    const score = Math.max(0, trustScore)
+    if (isLocalMode) {
+      localDb.updateUser(id, { trustScore: score, isVerified: score >= 50 })
+      return
+    }
+    await prisma.user.update({
+      where: { id },
+      data: { trustScore: score, isVerified: score >= 50 },
+    })
+  },
+
+  async deleteUser(id: string) {
+    if (isLocalMode) {
+      localDb.deleteUser(id)
+      return
+    }
+    await prisma.user.delete({ where: { id } })
+    const admin = getSupabaseAdmin()
+    if (admin) {
+      await admin.auth.admin.deleteUser(id).catch(() => {})
+    }
   },
 }

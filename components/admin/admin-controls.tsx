@@ -6,14 +6,18 @@ import { toast } from "sonner"
 import {
   deleteCategoryAction,
   deleteReportedItemAction,
+  deleteUserAction,
   saveCategoryAction,
   setHeadlineAction,
   setRoleAction,
+  setUserTrustScoreAction,
+  toggleUserVerifiedAction,
   updateReportStatusAction,
 } from "@/actions/admin.actions"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select } from "@/components/ui/select"
+import { BadgeCheckIcon, Trash2Icon } from "lucide-react"
 
 export function HeadlineSelect({ articleId, value }: { articleId: string; value: string }) {
   const [pending, startTransition] = useTransition()
@@ -145,3 +149,105 @@ export function ReportActions({
     </div>
   )
 }
+
+export function UserVerifiedToggle({
+  userId,
+  isVerified,
+  disabled,
+}: {
+  userId: string
+  isVerified: boolean
+  disabled: boolean
+}) {
+  const [pending, startTransition] = useTransition()
+
+  return (
+    <Button
+      size="xs"
+      variant={isVerified ? "default" : "outline"}
+      disabled={disabled || pending}
+      className={isVerified ? "bg-emerald-600 text-white hover:bg-emerald-700" : ""}
+      onClick={() =>
+        startTransition(async () => {
+          const r = await toggleUserVerifiedAction(userId)
+          if (r?.error) toast.error(r.error)
+          else toast.success(r?.success ?? "Status diperbarui.")
+        })
+      }
+    >
+      <BadgeCheckIcon className="size-3.5" />
+      {isVerified ? "Verified" : "Belum"}
+    </Button>
+  )
+}
+
+export function UserTrustScoreControl({
+  userId,
+  score,
+  disabled,
+}: {
+  userId: string
+  score: number
+  disabled: boolean
+}) {
+  const [pending, startTransition] = useTransition()
+
+  function updateScore(val: number) {
+    startTransition(async () => {
+      const r = await setUserTrustScoreAction(userId, val)
+      if (r?.error) toast.error(r.error)
+      else toast.success(r?.success ?? "Skor diperbarui.")
+    })
+  }
+
+  return (
+    <div className="flex items-center gap-1.5">
+      <Input
+        type="number"
+        min={0}
+        defaultValue={score}
+        disabled={disabled || pending}
+        aria-label="Skor reputasi"
+        className="h-8 w-18 text-xs font-semibold"
+        onBlur={(e) => {
+          const val = parseInt(e.target.value, 10)
+          if (!isNaN(val) && val !== score) updateScore(val)
+        }}
+      />
+    </div>
+  )
+}
+
+export function UserDeleteButton({
+  userId,
+  username,
+  disabled,
+}: {
+  userId: string
+  username: string
+  disabled: boolean
+}) {
+  const [pending, startTransition] = useTransition()
+
+  return (
+    <Button
+      size="icon-xs"
+      variant="ghost"
+      disabled={disabled || pending}
+      aria-label={`Hapus user ${username}`}
+      className="text-destructive hover:bg-destructive/10"
+      onClick={() => {
+        if (!confirm(`Hapus akun @${username} secara permanen? Seluruh berita dan komentar akan terhapus.`))
+          return
+        startTransition(async () => {
+          const r = await deleteUserAction(userId)
+          if (r?.error) toast.error(r.error)
+          else toast.success(r?.success ?? "Pengguna dihapus.")
+        })
+      }}
+    >
+      <Trash2Icon className="size-3.5" />
+    </Button>
+  )
+}
+

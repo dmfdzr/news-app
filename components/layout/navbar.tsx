@@ -66,7 +66,6 @@ export async function Navbar() {
                   <DropdownMenuItem render={<Link href="/tulis" />}>Tulis berita</DropdownMenuItem>
                   <DropdownMenuItem render={<Link href="/mengikuti" />}>Feed mengikuti</DropdownMenuItem>
                   <DropdownMenuItem render={<Link href="/bookmark" />}>Bookmark</DropdownMenuItem>
-                  <DropdownMenuItem render={<Link href="/pengaturan" />}>Pengaturan</DropdownMenuItem>
                   {isStaff && <DropdownMenuItem render={<Link href="/admin" />}>Panel moderator</DropdownMenuItem>}
                   <DropdownMenuSeparator />
                   <form action={signOutAction}>

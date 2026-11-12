@@ -1,7 +1,15 @@
 import type { Metadata } from "next"
 import Link from "next/link"
 
-import { CategoryForm, HeadlineSelect, ReportActions, RoleSelect } from "@/components/admin/admin-controls"
+import {
+  CategoryForm,
+  HeadlineSelect,
+  ReportActions,
+  RoleSelect,
+  UserDeleteButton,
+  UserTrustScoreControl,
+  UserVerifiedToggle,
+} from "@/components/admin/admin-controls"
 import { Badge } from "@/components/ui/badge"
 import { requireStaff } from "@/lib/auth"
 import { formatDateTime } from "@/lib/format"
@@ -121,18 +129,54 @@ export default async function AdminPage() {
 
       {isAdmin && (
         <section aria-labelledby="pengguna" className="flex flex-col gap-3">
-          <h2 id="pengguna" className="text-xl font-bold">Pengguna</h2>
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 id="pengguna" className="text-xl font-bold">Manajemen Pengguna (Admin Master)</h2>
+              <p className="text-sm text-slate-600 dark:text-slate-400">
+                Kelola peran, lencana verified, skor reputasi, dan akun seluruh pengguna.
+              </p>
+            </div>
+            <Badge variant="outline">{users.length} Akun Terdaftar</Badge>
+          </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b text-left text-xs font-semibold text-slate-500 uppercase">
+                  <th className="py-2 pr-4">Pengguna</th>
+                  <th className="py-2 pr-4">Email</th>
+                  <th className="py-2 pr-4">Peran</th>
+                  <th className="py-2 pr-4">Reputasi</th>
+                  <th className="py-2 pr-4">Verified</th>
+                  <th className="py-2">Aksi</th>
+                </tr>
+              </thead>
               <tbody>
-                {users.map((u) => (
-                  <tr key={u.id} className="border-b">
-                    <td className="py-2 pr-4"><Link href={`/@${u.username}`} className="hover:underline">{u.fullName} (@{u.username})</Link></td>
-                    <td className="py-2 pr-4 text-slate-600">{u.email}</td>
-                    <td className="py-2 pr-4">{u.trustScore}</td>
-                    <td className="py-2"><RoleSelect userId={u.id} value={u.role} disabled={u.id === staff.id} /></td>
-                  </tr>
-                ))}
+                {users.map((u) => {
+                  const isCurrentAdmin = u.id === staff.id
+                  return (
+                    <tr key={u.id} className="border-b">
+                      <td className="py-2.5 pr-4">
+                        <Link href={`/@${u.username}`} className="font-semibold text-foreground hover:underline">
+                          {u.fullName}
+                        </Link>
+                        <p className="text-xs text-muted-foreground">@{u.username}</p>
+                      </td>
+                      <td className="py-2.5 pr-4 text-xs text-slate-600 dark:text-slate-400">{u.email}</td>
+                      <td className="py-2.5 pr-4">
+                        <RoleSelect userId={u.id} value={u.role} disabled={isCurrentAdmin} />
+                      </td>
+                      <td className="py-2.5 pr-4">
+                        <UserTrustScoreControl userId={u.id} score={u.trustScore} disabled={isCurrentAdmin} />
+                      </td>
+                      <td className="py-2.5 pr-4">
+                        <UserVerifiedToggle userId={u.id} isVerified={u.isVerified} disabled={isCurrentAdmin} />
+                      </td>
+                      <td className="py-2.5">
+                        <UserDeleteButton userId={u.id} username={u.username} disabled={isCurrentAdmin} />
+                      </td>
+                    </tr>
+                  )
+                })}
               </tbody>
             </table>
           </div>

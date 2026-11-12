@@ -367,6 +367,10 @@ export class LocalDb {
     this.save()
     return this.data.users[idx]
   }
+  deleteUser(id: string) {
+    this.data.users = this.data.users.filter((u) => u.id !== id)
+    this.save()
+  }
 
   // --- Categories ---
   getCategories() {

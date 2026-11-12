@@ -27,6 +27,7 @@
     "@tiptap/react": "^3.33.1",
     "@tiptap/starter-kit": "^3.33.1",
     "class-variance-authority": "^0.7.1",
+    "cloudinary": "^2.11.0",
     "cn": "^0.5.2",
     "googleapis": "^189.0.0",
     "isomorphic-dompurify": "^4.7.0",

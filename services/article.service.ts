@@ -6,7 +6,7 @@ import { z } from "zod"
 import { isLocalMode } from "@/lib/env"
 import { localDb } from "@/lib/local-db"
 import { ServiceError } from "@/lib/errors"
-import { deleteFile } from "@/lib/google-drive"
+import { deleteFromCloudinary } from "@/lib/cloudinary"
 import { DRIVE_ID_PATTERN } from "@/lib/media"
 import { prisma } from "@/lib/prisma"
 import { sanitizeHtml } from "@/lib/sanitize"
@@ -410,7 +410,7 @@ export const articleService = {
         ...(data.status === "DRAFT" ? { headlinePosition: "NONE" } : {}),
       },
     })
-    if (existing.thumbnailDriveId !== data.thumbnailDriveId) await deleteFile(existing.thumbnailDriveId)
+    if (existing.thumbnailDriveId !== data.thumbnailDriveId) await deleteFromCloudinary(existing.thumbnailDriveId)
     return updated
   },
 
@@ -428,7 +428,7 @@ export const articleService = {
     if (!canManage(user, existing.authorId)) throw new ServiceError("Anda tidak berhak menghapus berita ini.")
 
     await prisma.article.delete({ where: { id } })
-    await deleteFile(existing.thumbnailDriveId)
+    await deleteFromCloudinary(existing.thumbnailDriveId)
   },
 
   async setHeadline(id: string, position: HeadlinePosition) {

@@ -95,26 +95,6 @@ export async function signUpAction(_: ActionState, formData: FormData): Promise<
   redirect("/")
 }
 
-export async function signInWithGoogleAction(formData: FormData) {
-  if (isLocalMode) {
-    const user = localDb.getUserById("user-admin-1")
-    if (user) {
-      const c = await cookies()
-      c.set("local_user_id", user.id, { path: "/" })
-    }
-    redirect(safeNext(formData.get("next")))
-  }
-
-  const supabase = await createClient()
-  const next = safeNext(formData.get("next"))
-  const { data, error } = await supabase.auth.signInWithOAuth({
-    provider: "google",
-    options: { redirectTo: `${await origin()}/auth/callback?next=${encodeURIComponent(next)}` },
-  })
-  if (error || !data.url) redirect("/masuk?error=oauth")
-  redirect(data.url)
-}
-
 export async function signOutAction() {
   if (isLocalMode) {
     const c = await cookies()

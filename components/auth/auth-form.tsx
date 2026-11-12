@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { useActionState } from "react"
 
-import { signInAction, signInWithGoogleAction, signUpAction } from "@/actions/auth.actions"
+import { signInAction, signUpAction } from "@/actions/auth.actions"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -36,13 +36,6 @@ export function AuthForm({ mode, next }: { mode: "masuk" | "daftar"; next: strin
         {state?.success && <p role="status" className="text-sm text-emerald-600">{state.success}</p>}
         <Button type="submit" disabled={pending}>
           {isLogin ? "Masuk" : "Daftar"}
-        </Button>
-      </form>
-
-      <form action={signInWithGoogleAction}>
-        <input type="hidden" name="next" value={next} />
-        <Button type="submit" variant="outline" className="w-full">
-          Lanjutkan dengan Google
         </Button>
       </form>
 

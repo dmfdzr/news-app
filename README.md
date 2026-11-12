@@ -9,8 +9,8 @@
 - **Framework:** Next.js 16 (App Router) + React 19 + TypeScript
 - **Styling & UI:** Tailwind CSS v4, shadcn/ui primitives, Lucide Icons, TipTap Rich Text Editor
 - **Database & ORM:** Supabase PostgreSQL + Prisma ORM 6
-- **Autentikasi:** Supabase Auth (Email & Password, Google OAuth)
-- **Penyimpanan Media:** Google Drive API v3 (Service Account) + Sharp WebP compression + Edge Caching Proxy (`/api/media/[fileId]`)
+- **Autentikasi:** Supabase Auth (Email & Password)
+- **Penyimpanan Media:** Cloudinary CDN + Sharp WebP compression + Edge Caching Proxy (`/api/media/[fileId]`)
 
 ---
 
@@ -39,13 +39,20 @@
 
 6. **Sistem Pelaporan & Panel Moderator (`/admin`):**
    - Pengguna dapat melaporkan berita atau komentar yang terindikasi hoaks, informasi menyesatkan, atau spam.
-   - Panel khusus moderator untuk menindaklanjuti laporan, mengatur berita headline bento-grid, mengelola kategori, dan peran user.
+   - Panel khusus moderator/admin untuk menindaklanjuti laporan, mengatur berita headline bento-grid, dan mengelola kategori.
+   - **Manajemen Pengguna (Admin Master)**: Ubah peran pengguna (`USER`, `MODERATOR`, `ADMIN`), toggle status verified contributor, atur trust score, dan hapus akun pengguna.
 
-7. **Pusat Notifikasi (`/notifikasi`):**
-   - Ikon lonceng navbar dengan indikator angka riil jumlah interaksi baru.
+7. **Manajemen Akun Mandiri (`/pengaturan` via Edit Profil):**
+   - Akses via tombol "Edit profil" di halaman profil saya (`/@username`).
+   - Tab **Profil**: Ubah foto avatar, nama lengkap, username unik, dan bio.
+   - Tab **Email Akun**: Perbarui alamat email login akun.
+   - Tab **Kata Sandi**: Ganti kata sandi akun login.
+
+8. **Pusat Notifikasi (`/notifikasi`):**
+   - Ikon lonceng navbar dengan badge angka jumlah interaksi baru.
    - Tab filter notifikasi (Suka, Repost, Komentar, Catatan Komunitas, Pengikut Baru).
 
-8. **Custom Dropdown & Search:**
+9. **Custom Dropdown & Search:**
    - Seluruh komponen seleksi menggunakan custom dropdown modern dengan sudut membulat (*rounded-2xl*), glassmorphism, dan fitur pencarian real-time terintegrasi.
 
 ---
@@ -74,12 +81,14 @@ DIRECT_URL="postgresql://postgres.[PROJECT-REF]:[PASSWORD]@aws-1-[REGION].pooler
 # 2. SUPABASE AUTH & API KEYS
 NEXT_PUBLIC_SUPABASE_URL="https://[PROJECT-REF].supabase.co"
 NEXT_PUBLIC_SUPABASE_ANON_KEY="sb_publishable_..."
+SUPABASE_SECRET_KEY="sb_secret_..."
 
-# 3. GOOGLE DRIVE API (Service Account untuk Upload Gambar)
-GOOGLE_DRIVE_CLIENT_EMAIL="news-uploader@[PROJECT-ID].iam.gserviceaccount.com"
-GOOGLE_DRIVE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
-GOOGLE_DRIVE_FOLDER_ID="1A2b3C4d5E6f7G8h9I0j..."
+# 3. CLOUDINARY MEDIA STORAGE
+CLOUDINARY_CLOUD_NAME=""
+CLOUDINARY_API_KEY=""
+CLOUDINARY_API_SECRET=""
 
+# 4. SITE CONFIG
 NEXT_PUBLIC_SITE_URL="http://localhost:3000"
 ```
 

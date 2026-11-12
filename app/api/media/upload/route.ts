@@ -4,8 +4,7 @@ import { NextResponse, type NextRequest } from "next/server"
 import sharp from "sharp"
 
 import { getCurrentUser } from "@/lib/auth"
-import { isLocalMode } from "@/lib/env"
-import { uploadWebp } from "@/lib/google-drive"
+import { isCloudinaryConfigured, uploadToCloudinary } from "@/lib/cloudinary"
 import { MAX_UPLOAD_BYTES } from "@/lib/media"
 
 export const runtime = "nodejs"
@@ -28,22 +27,30 @@ export async function POST(request: NextRequest) {
   try {
     const webp = await sharp(Buffer.from(await file.arrayBuffer()))
       .rotate()
-      .resize({ width: kind === "avatar" ? 400 : 1600, height: kind === "avatar" ? 400 : undefined, fit: kind === "avatar" ? "cover" : "inside", withoutEnlargement: true })
+      .resize({
+        width: kind === "avatar" ? 400 : 1600,
+        height: kind === "avatar" ? 400 : undefined,
+        fit: kind === "avatar" ? "cover" : "inside",
+        withoutEnlargement: true,
+      })
       .webp({ quality: 80 })
       .toBuffer()
 
-    if (isLocalMode) {
-      if (!fs.existsSync(LOCAL_MEDIA_DIR)) {
-        fs.mkdirSync(LOCAL_MEDIA_DIR, { recursive: true })
-      }
-      const fileId = `local-${Date.now()}-${crypto.randomUUID().slice(0, 8)}`
-      fs.writeFileSync(path.join(LOCAL_MEDIA_DIR, `${fileId}.webp`), webp)
-      return NextResponse.json({ fileId })
+    if (isCloudinaryConfigured()) {
+      const publicId = `cs_${kind}_${Date.now()}_${user.id.slice(0, 8)}`
+      const uploaded = await uploadToCloudinary(webp, publicId)
+      return NextResponse.json({ fileId: uploaded.fileId, url: uploaded.url })
     }
 
-    const fileId = await uploadWebp(webp, `${kind}-${user.id}-${Date.now()}.webp`)
+    // Local / fallback mode
+    if (!fs.existsSync(LOCAL_MEDIA_DIR)) {
+      fs.mkdirSync(LOCAL_MEDIA_DIR, { recursive: true })
+    }
+    const fileId = `local-${Date.now()}-${crypto.randomUUID().slice(0, 8)}`
+    fs.writeFileSync(path.join(LOCAL_MEDIA_DIR, `${fileId}.webp`), webp)
     return NextResponse.json({ fileId })
-  } catch {
+  } catch (e) {
+    console.error("Upload error:", e)
     return NextResponse.json({ error: "Gagal mengunggah gambar." }, { status: 500 })
   }
 }

@@ -70,6 +70,43 @@ export async function setRoleAction(userId: string, role: string): Promise<Actio
   return { success: "Peran diperbarui." }
 }
 
+export async function toggleUserVerifiedAction(userId: string): Promise<ActionState> {
+  const admin = await requireUser()
+  if (admin.role !== "ADMIN") return { error: "Hanya admin yang dapat mengubah status verifikasi." }
+  try {
+    await userService.toggleVerified(userId)
+  } catch (error) {
+    return toActionError(error, "Gagal mengubah status verifikasi.")
+  }
+  revalidatePath("/admin")
+  return { success: "Status verifikasi diperbarui." }
+}
+
+export async function setUserTrustScoreAction(userId: string, trustScore: number): Promise<ActionState> {
+  const admin = await requireUser()
+  if (admin.role !== "ADMIN") return { error: "Hanya admin yang dapat mengubah skor reputasi." }
+  try {
+    await userService.setTrustScore(userId, trustScore)
+  } catch (error) {
+    return toActionError(error, "Gagal mengubah skor reputasi.")
+  }
+  revalidatePath("/admin")
+  return { success: "Skor reputasi diperbarui." }
+}
+
+export async function deleteUserAction(userId: string): Promise<ActionState> {
+  const admin = await requireUser()
+  if (admin.role !== "ADMIN") return { error: "Hanya admin yang dapat menghapus akun pengguna." }
+  if (admin.id === userId) return { error: "Anda tidak dapat menghapus akun sendiri." }
+  try {
+    await userService.deleteUser(userId)
+  } catch (error) {
+    return toActionError(error, "Gagal menghapus pengguna.")
+  }
+  revalidatePath("/admin")
+  return { success: "Pengguna berhasil dihapus." }
+}
+
 export async function updateReportStatusAction(reportId: string, status: string): Promise<ActionState> {
   await requireStaff()
   if (!REPORT_STATUSES.includes(status as ReportStatus)) return { error: "Status laporan tidak valid." }
