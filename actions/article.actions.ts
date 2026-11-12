@@ -13,6 +13,7 @@ const payloadSchema = z.object({
   excerpt: z.string().optional(),
   content: z.string(),
   keyTakeaways: z.array(z.string()),
+  tags: z.array(z.string()).default([]),
   categoryId: z.string(),
   thumbnailDriveId: z.string(),
   imageCaption: z.string().optional(),

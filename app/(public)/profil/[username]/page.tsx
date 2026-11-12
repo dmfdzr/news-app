@@ -22,13 +22,15 @@ type Props = { params: Promise<{ username: string }> }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { username } = await params
-  const profile = await userService.getByUsername(decodeURIComponent(username))
+  const clean = decodeURIComponent(username).replace(/^@/, "")
+  const profile = await userService.getByUsername(clean)
   return { title: profile ? `${profile.fullName} (@${profile.username})` : "Profil" }
 }
 
 export default async function ProfilePage({ params }: Props) {
   const { username } = await params
-  const profile = await userService.getByUsername(decodeURIComponent(username))
+  const clean = decodeURIComponent(username).replace(/^@/, "")
+  const profile = await userService.getByUsername(clean)
   if (!profile) notFound()
 
   const viewer = await getCurrentUser()
@@ -54,11 +56,23 @@ export default async function ProfilePage({ params }: Props) {
           </h1>
           <p className="text-sm text-slate-600 dark:text-slate-400">@{profile.username} · bergabung {formatDate(profile.createdAt)}</p>
           {profile.bio && <p className="mt-1 text-sm whitespace-pre-wrap">{profile.bio}</p>}
-          <div className="mt-2 flex flex-wrap gap-4 text-sm">
+          <div className="mt-2 flex flex-wrap items-center gap-3 text-sm">
             <span><strong>{profile._count.articles}</strong> berita</span>
             <span><strong>{profile._count.followers}</strong> pengikut</span>
             <span><strong>{profile._count.following}</strong> mengikuti</span>
-            <Badge variant="outline">Trust score {profile.trustScore}</Badge>
+            <Badge variant="outline" className="border-blue-500/30 bg-blue-50/50 text-blue-700 dark:bg-blue-950/20 dark:text-blue-300">
+              Skor Kepercayaan: {profile.trustScore}
+            </Badge>
+            {profile.isVerified ? (
+              <Badge className="bg-emerald-600 text-white">
+                <BadgeCheckIcon className="mr-1 size-3.5" />
+                Verified Contributor
+              </Badge>
+            ) : (
+              <span className="text-xs text-slate-500">
+                (Perlu {Math.max(0, 50 - profile.trustScore)} poin lagi untuk Verified Contributor)
+              </span>
+            )}
           </div>
         </div>
         {isSelf ? (

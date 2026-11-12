@@ -1,6 +1,7 @@
 import Link from "next/link"
 
 import { signOutAction } from "@/actions/auth.actions"
+import { NotificationsMenu } from "@/components/layout/notifications-menu"
 import { ThemeToggle } from "@/components/layout/theme-toggle"
 import { UserAvatar } from "@/components/news/user-bits"
 import { Button, buttonVariants } from "@/components/ui/button"
@@ -13,18 +14,24 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { getCurrentUser } from "@/lib/auth"
 import { categoryService } from "@/services/category.service"
+import { notificationService } from "@/services/notification.service"
 import { PenLineIcon, SearchIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 export async function Navbar() {
   const [categories, user] = await Promise.all([categoryService.list(), getCurrentUser()])
+  const notifications = user ? await notificationService.list(user.id) : []
   const isStaff = user?.role === "ADMIN" || user?.role === "MODERATOR"
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-slate-200 bg-slate-100/90 backdrop-blur dark:border-white/10 dark:bg-background/90">
       <div className="mx-auto flex h-16 max-w-7xl items-center gap-4 px-4 lg:gap-8 lg:px-8">
-        <Link href="/" className="font-heading text-xl font-extrabold tracking-tight">
-          Warta<span className="text-blue-600">Warga</span>
+        <Link href="/" className="font-heading flex items-center gap-2 text-xl font-extrabold tracking-tight">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo.png" alt="Logo" className="size-8 object-contain" />
+          <span>
+            Climate<span className="text-emerald-600">Stories</span>
+          </span>
         </Link>
 
         <nav aria-label="Kategori" className="hidden min-w-0 flex-1 items-center gap-6 overflow-x-auto md:flex">
@@ -44,6 +51,7 @@ export async function Navbar() {
             <SearchIcon />
           </Link>
           <ThemeToggle />
+          {user && <NotificationsMenu notifications={notifications} />}
           {user ? (
             <>
               <Link href="/tulis" className={cn(buttonVariants({ size: "sm" }), "hidden sm:inline-flex")}>
@@ -53,7 +61,7 @@ export async function Navbar() {
                 <DropdownMenuTrigger render={<Button variant="ghost" size="icon" aria-label="Menu akun" />}>
                   <UserAvatar user={user} />
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="min-w-48">
+                <DropdownMenuContent align="end" className="min-w-56">
                   <DropdownMenuItem render={<Link href={`/@${user.username}`} />}>Profil saya</DropdownMenuItem>
                   <DropdownMenuItem render={<Link href="/tulis" />}>Tulis berita</DropdownMenuItem>
                   <DropdownMenuItem render={<Link href="/mengikuti" />}>Feed mengikuti</DropdownMenuItem>
@@ -62,7 +70,11 @@ export async function Navbar() {
                   {isStaff && <DropdownMenuItem render={<Link href="/admin" />}>Panel moderator</DropdownMenuItem>}
                   <DropdownMenuSeparator />
                   <form action={signOutAction}>
-                    <DropdownMenuItem render={<button type="submit" className="w-full" />} variant="destructive">
+                    <DropdownMenuItem
+                      nativeButton
+                      render={<button type="submit" className="w-full text-left" />}
+                      variant="destructive"
+                    >
                       Keluar
                     </DropdownMenuItem>
                   </form>

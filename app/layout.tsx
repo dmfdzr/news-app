@@ -11,9 +11,14 @@ const inter = Inter({ subsets: ["latin"], variable: "--font-sans" })
 const jakarta = Plus_Jakarta_Sans({ subsets: ["latin"], variable: "--font-jakarta" })
 
 export const metadata: Metadata = {
-  title: { default: "Warta Warga", template: "%s | Warta Warga" },
-  description: "Portal berita sosial dan jurnalisme warga: tulis, repost, dan diskusikan berita.",
+  title: { default: "ClimateStories", template: "%s | ClimateStories" },
+  description: "Platform jurnalisme dan berita sosial: tulis, repost, dan diskusikan isu lingkungan dan kabar terkini.",
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"),
+  icons: {
+    icon: "/icon.png",
+    shortcut: "/icon.png",
+    apple: "/icon.png",
+  },
 }
 
 export default function RootLayout({

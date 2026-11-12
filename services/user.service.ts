@@ -38,6 +38,7 @@ function toLocalCard(articleId: string): ArticleCard | null {
     imageCaption: a.imageCaption,
     publishedAt: a.publishedAt,
     type: a.type,
+    tags: a.tags ?? [],
     headlinePosition: a.headlinePosition,
     author: {
       username: author?.username ?? "anon",
@@ -59,8 +60,9 @@ function toLocalCard(articleId: string): ArticleCard | null {
 
 export const userService = {
   getByUsername(username: string) {
+    const clean = decodeURIComponent(username).replace(/^@/, "").toLowerCase()
     if (isLocalMode) {
-      const u = localDb.getUserByUsername(username)
+      const u = localDb.getUserByUsername(clean)
       if (!u) return Promise.resolve(null)
       const publishedCount = localDb.getArticles().filter((a) => a.authorId === u.id && a.status === "PUBLISHED").length
       return Promise.resolve({
@@ -81,7 +83,7 @@ export const userService = {
     }
 
     return prisma.user.findUnique({
-      where: { username: username.toLowerCase() },
+      where: { username: clean },
       select: {
         id: true,
         username: true,

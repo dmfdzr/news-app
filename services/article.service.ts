@@ -25,6 +25,7 @@ export const cardSelect = {
   imageCaption: true,
   publishedAt: true,
   type: true,
+  tags: true,
   headlinePosition: true,
   author: {
     select: { username: true, fullName: true, avatarDriveId: true, isVerified: true },
@@ -47,6 +48,7 @@ function toArticleCard(a: Article): ArticleCard {
     imageCaption: a.imageCaption,
     publishedAt: a.publishedAt,
     type: a.type,
+    tags: a.tags ?? [],
     headlinePosition: a.headlinePosition,
     author: {
       username: author?.username ?? "anon",
@@ -75,6 +77,7 @@ const articleSchema = z.object({
   keyTakeaways: z
     .array(z.string().trim().min(1).max(200, "Setiap poin maksimal 200 karakter."))
     .max(3, "Maksimal 3 poin inti."),
+  tags: z.array(z.string().trim().max(30)).max(8).default([]),
   categoryId: z.string().min(1, "Pilih kategori."),
   thumbnailDriveId: z
     .string()
@@ -99,6 +102,9 @@ function parseInput(input: ArticleInput) {
     imageCaption: input.imageCaption?.trim() || undefined,
     sourceUrl: input.sourceUrl?.trim() || undefined,
     keyTakeaways: input.keyTakeaways.map((t) => t.trim()).filter(Boolean),
+    tags: (input.tags ?? [])
+      .map((t) => t.trim().toLowerCase().replace(/^#/, ""))
+      .filter(Boolean),
   }
   const parsed = articleSchema.safeParse(cleaned)
   if (!parsed.success) throw new ServiceError(parsed.error.issues[0].message)
@@ -184,7 +190,8 @@ export const articleService = {
           (a) =>
             a.title.toLowerCase().includes(term) ||
             (a.excerpt && a.excerpt.toLowerCase().includes(term)) ||
-            a.content.toLowerCase().includes(term)
+            a.content.toLowerCase().includes(term) ||
+            (a.tags && a.tags.some((t) => t.toLowerCase().includes(term)))
         )
       }
       const current = Math.max(1, Math.floor(page) || 1)
@@ -203,6 +210,7 @@ export const articleService = {
               { title: { contains: term, mode: "insensitive" } },
               { excerpt: { contains: term, mode: "insensitive" } },
               { content: { contains: term, mode: "insensitive" } },
+              { tags: { has: term.toLowerCase() } },
             ],
           }
         : {}),
@@ -227,6 +235,18 @@ export const articleService = {
       if (!a) return null
       const author = localDb.getUserById(a.authorId)
       const category = localDb.getCategoryById(a.categoryId)
+      const notes = localDb.getCommunityNotes(a.id).map((n) => {
+        const u = localDb.getUserById(n.userId)
+        return {
+          ...n,
+          user: {
+            username: u?.username ?? "anon",
+            fullName: u?.fullName ?? "Anonim",
+            avatarDriveId: u?.avatarDriveId ?? null,
+            isVerified: u?.isVerified ?? false,
+          },
+        }
+      })
       return {
         ...a,
         author: {
@@ -242,6 +262,7 @@ export const articleService = {
           name: category?.name ?? "Umum",
           slug: category?.slug ?? "umum",
         },
+        communityNotes: notes,
         _count: {
           comments: localDb.getComments(a.id).length,
           reposts: localDb.getReposts(a.id).length,
@@ -257,6 +278,12 @@ export const articleService = {
           select: { id: true, username: true, fullName: true, avatarDriveId: true, isVerified: true, bio: true },
         },
         category: { select: { id: true, name: true, slug: true } },
+        communityNotes: {
+          include: {
+            user: { select: { username: true, fullName: true, avatarDriveId: true, isVerified: true } },
+          },
+          orderBy: { createdAt: "desc" },
+        },
         _count: { select: { comments: true, reposts: true, likes: true } },
       },
     })
@@ -326,6 +353,7 @@ export const articleService = {
         excerpt: data.excerpt ?? null,
         imageCaption: data.imageCaption ?? null,
         sourceUrl: data.sourceUrl ?? null,
+        tags: data.tags ?? [],
         viewCount: 0,
         authorId: user.id,
         createdAt: now,
@@ -356,6 +384,7 @@ export const articleService = {
       const data = parseInput(input)
       const updated = localDb.updateArticle(id, {
         ...data,
+        tags: data.tags ?? existing.tags ?? [],
         excerpt: data.excerpt ?? null,
         imageCaption: data.imageCaption ?? null,
         sourceUrl: data.sourceUrl ?? null,

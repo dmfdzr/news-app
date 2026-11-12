@@ -3,20 +3,26 @@
 import { useActionState, useEffect, useTransition } from "react"
 import { toast } from "sonner"
 
-import { deleteCategoryAction, saveCategoryAction, setHeadlineAction, setRoleAction } from "@/actions/admin.actions"
+import {
+  deleteCategoryAction,
+  deleteReportedItemAction,
+  saveCategoryAction,
+  setHeadlineAction,
+  setRoleAction,
+  updateReportStatusAction,
+} from "@/actions/admin.actions"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-
-const selectClass = "h-8 rounded-4xl border border-input bg-input/30 px-2 text-sm"
+import { Select } from "@/components/ui/select"
 
 export function HeadlineSelect({ articleId, value }: { articleId: string; value: string }) {
   const [pending, startTransition] = useTransition()
   return (
-    <select
+    <Select
       aria-label="Posisi headline"
-      className={selectClass}
       defaultValue={value}
       disabled={pending}
+      wrapperClassName="w-40"
       onChange={(e) =>
         startTransition(async () => {
           const r = await setHeadlineAction(articleId, e.target.value)
@@ -29,18 +35,18 @@ export function HeadlineSelect({ articleId, value }: { articleId: string; value:
       <option value="MAIN_LEFT">Utama (kiri)</option>
       <option value="MIDDLE_CENTER">Tengah</option>
       <option value="RIGHT_LIST">Daftar kanan</option>
-    </select>
+    </Select>
   )
 }
 
 export function RoleSelect({ userId, value, disabled }: { userId: string; value: string; disabled: boolean }) {
   const [pending, startTransition] = useTransition()
   return (
-    <select
+    <Select
       aria-label="Peran"
-      className={selectClass}
       defaultValue={value}
       disabled={disabled || pending}
+      wrapperClassName="w-36"
       onChange={(e) =>
         startTransition(async () => {
           const r = await setRoleAction(userId, e.target.value)
@@ -52,7 +58,7 @@ export function RoleSelect({ userId, value, disabled }: { userId: string; value:
       <option value="USER">User</option>
       <option value="MODERATOR">Moderator</option>
       <option value="ADMIN">Admin</option>
-    </select>
+    </Select>
   )
 }
 
@@ -91,5 +97,51 @@ export function CategoryForm({ category }: { category?: { id: string; name: stri
         </Button>
       )}
     </form>
+  )
+}
+
+export function ReportActions({
+  reportId,
+  targetType,
+  targetId,
+}: {
+  reportId: string
+  targetType?: "ARTICLE" | "COMMENT"
+  targetId?: string
+}) {
+  const [pending, startTransition] = useTransition()
+
+  function setStatus(status: "RESOLVED" | "DISMISSED") {
+    startTransition(async () => {
+      const res = await updateReportStatusAction(reportId, status)
+      if (res?.error) toast.error(res.error)
+      else toast.success(res?.success ?? "Status diperbarui.")
+    })
+  }
+
+  function deleteContent() {
+    if (!targetType || !targetId) return
+    if (!confirm(`Hapus konten ${targetType.toLowerCase()} ini secara permanen?`)) return
+    startTransition(async () => {
+      const res = await deleteReportedItemAction(reportId, targetType, targetId)
+      if (res?.error) toast.error(res.error)
+      else toast.success(res?.success ?? "Konten dihapus.")
+    })
+  }
+
+  return (
+    <div className="flex flex-wrap items-center gap-1.5">
+      <Button size="xs" variant="outline" disabled={pending} onClick={() => setStatus("RESOLVED")}>
+        Selesai
+      </Button>
+      <Button size="xs" variant="ghost" disabled={pending} onClick={() => setStatus("DISMISSED")}>
+        Abaikan
+      </Button>
+      {targetType && targetId && (
+        <Button size="xs" variant="destructive" disabled={pending} onClick={deleteContent}>
+          Hapus Konten
+        </Button>
+      )}
+    </div>
   )
 }

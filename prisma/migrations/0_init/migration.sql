@@ -13,6 +13,12 @@ CREATE TYPE "ArticleType" AS ENUM ('CITIZEN_REPORT', 'OPINION');
 -- CreateEnum
 CREATE TYPE "HeadlinePosition" AS ENUM ('NONE', 'MAIN_LEFT', 'MIDDLE_CENTER', 'RIGHT_LIST');
 
+-- CreateEnum
+CREATE TYPE "ReportReason" AS ENUM ('HOAX', 'SPAM', 'MISLEADING', 'HARASSMENT', 'OTHER');
+
+-- CreateEnum
+CREATE TYPE "ReportStatus" AS ENUM ('PENDING', 'RESOLVED', 'DISMISSED');
+
 -- CreateTable
 CREATE TABLE "User" (
     "id" TEXT NOT NULL,
@@ -50,6 +56,7 @@ CREATE TABLE "Article" (
     "excerpt" TEXT,
     "content" TEXT NOT NULL,
     "keyTakeaways" TEXT[],
+    "tags" TEXT[] DEFAULT ARRAY[]::TEXT[],
     "thumbnailDriveId" TEXT NOT NULL,
     "imageCaption" TEXT,
     "sourceUrl" TEXT,
@@ -120,6 +127,34 @@ CREATE TABLE "Follow" (
     CONSTRAINT "Follow_pkey" PRIMARY KEY ("followerId","followingId")
 );
 
+-- CreateTable
+CREATE TABLE "CommunityNote" (
+    "id" TEXT NOT NULL,
+    "content" TEXT NOT NULL,
+    "sourceUrl" TEXT,
+    "userId" TEXT NOT NULL,
+    "articleId" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "CommunityNote_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Report" (
+    "id" TEXT NOT NULL,
+    "reason" "ReportReason" NOT NULL,
+    "details" TEXT,
+    "status" "ReportStatus" NOT NULL DEFAULT 'PENDING',
+    "userId" TEXT NOT NULL,
+    "articleId" TEXT,
+    "commentId" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "Report_pkey" PRIMARY KEY ("id")
+);
+
 -- CreateIndex
 CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
 
@@ -174,6 +209,12 @@ CREATE UNIQUE INDEX "Like_userId_articleId_key" ON "Like"("userId", "articleId")
 -- CreateIndex
 CREATE UNIQUE INDEX "Bookmark_userId_articleId_key" ON "Bookmark"("userId", "articleId");
 
+-- CreateIndex
+CREATE INDEX "CommunityNote_articleId_idx" ON "CommunityNote"("articleId");
+
+-- CreateIndex
+CREATE INDEX "Report_status_idx" ON "Report"("status");
+
 -- AddForeignKey
 ALTER TABLE "Article" ADD CONSTRAINT "Article_authorId_fkey" FOREIGN KEY ("authorId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
@@ -212,4 +253,19 @@ ALTER TABLE "Follow" ADD CONSTRAINT "Follow_followerId_fkey" FOREIGN KEY ("follo
 
 -- AddForeignKey
 ALTER TABLE "Follow" ADD CONSTRAINT "Follow_followingId_fkey" FOREIGN KEY ("followingId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "CommunityNote" ADD CONSTRAINT "CommunityNote_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "CommunityNote" ADD CONSTRAINT "CommunityNote_articleId_fkey" FOREIGN KEY ("articleId") REFERENCES "Article"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Report" ADD CONSTRAINT "Report_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Report" ADD CONSTRAINT "Report_articleId_fkey" FOREIGN KEY ("articleId") REFERENCES "Article"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Report" ADD CONSTRAINT "Report_commentId_fkey" FOREIGN KEY ("commentId") REFERENCES "Comment"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 

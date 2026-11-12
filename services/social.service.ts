@@ -1,6 +1,6 @@
 import "server-only"
 
-import type { User } from "@prisma/client"
+import type { ReportReason, ReportStatus, User } from "@prisma/client"
 import { z } from "zod"
 
 import { isLocalMode } from "@/lib/env"
@@ -19,6 +19,23 @@ const quoteSchema = z
   .string()
   .trim()
   .max(500, "Kutipan maksimal 500 karakter.")
+
+const communityNoteSchema = z.object({
+  content: z.string().trim().min(10, "Catatan komunitas minimal 10 karakter.").max(1000, "Catatan komunitas maksimal 1000 karakter."),
+  sourceUrl: z
+    .string()
+    .trim()
+    .max(500)
+    .refine((v) => !v || /^https?:\/\/\S+$/i.test(v), "Tautan sumber harus diawali http:// atau https://")
+    .optional(),
+})
+
+const reportSchema = z.object({
+  reason: z.enum(["HOAX", "SPAM", "MISLEADING", "HARASSMENT", "OTHER"]),
+  details: z.string().trim().max(500).optional(),
+  articleId: z.string().optional(),
+  commentId: z.string().optional(),
+})
 
 async function adjustTrust(authorId: string, delta: number) {
   if (isLocalMode) {
@@ -370,5 +387,133 @@ export const socialService = {
       select: { followerId: true },
     })
     return !!row
+  },
+
+  async addCommunityNote(user: User, articleId: string, content: string, sourceUrl?: string) {
+    await publishedArticle(articleId)
+    const isStaff = user.role === "ADMIN" || user.role === "MODERATOR"
+    if (!isStaff && user.trustScore < VERIFIED_THRESHOLD && !user.isVerified) {
+      throw new ServiceError(
+        "Hanya kontributor terverifikasi (skor kepercayaan ≥ 50) yang dapat menambahkan Catatan Komunitas."
+      )
+    }
+
+    const parsed = communityNoteSchema.safeParse({ content, sourceUrl: sourceUrl?.trim() || undefined })
+    if (!parsed.success) throw new ServiceError(parsed.error.issues[0].message)
+
+    if (isLocalMode) {
+      const now = new Date()
+      return localDb.createCommunityNote({
+        id: `note-${Date.now()}`,
+        content: parsed.data.content,
+        sourceUrl: parsed.data.sourceUrl ?? null,
+        userId: user.id,
+        articleId,
+        createdAt: now,
+        updatedAt: now,
+      })
+    }
+
+    return prisma.communityNote.create({
+      data: {
+        content: parsed.data.content,
+        sourceUrl: parsed.data.sourceUrl ?? null,
+        userId: user.id,
+        articleId,
+      },
+    })
+  },
+
+  async deleteCommunityNote(user: User, noteId: string) {
+    if (isLocalMode) {
+      const notes = localDb.getCommunityNotes("")
+      const found = notes.find((n) => n.id === noteId)
+      const isStaff = user.role === "ADMIN" || user.role === "MODERATOR"
+      if (found && found.userId !== user.id && !isStaff) {
+        throw new ServiceError("Anda tidak berhak menghapus catatan komunitas ini.")
+      }
+      localDb.deleteCommunityNote(noteId)
+      return
+    }
+
+    const note = await prisma.communityNote.findUnique({ where: { id: noteId } })
+    if (!note) throw new ServiceError("Catatan komunitas tidak ditemukan.")
+    const isStaff = user.role === "ADMIN" || user.role === "MODERATOR"
+    if (note.userId !== user.id && !isStaff) {
+      throw new ServiceError("Anda tidak berhak menghapus catatan komunitas ini.")
+    }
+    await prisma.communityNote.delete({ where: { id: noteId } })
+  },
+
+  async createReport(
+    user: User,
+    input: { reason: ReportReason; details?: string; articleId?: string; commentId?: string }
+  ) {
+    const parsed = reportSchema.safeParse(input)
+    if (!parsed.success) throw new ServiceError("Data laporan tidak valid.")
+    if (!input.articleId && !input.commentId) {
+      throw new ServiceError("Laporan harus menyertakan berita atau komentar yang dilaporkan.")
+    }
+
+    if (isLocalMode) {
+      const now = new Date()
+      return localDb.createReport({
+        id: `rep-${Date.now()}`,
+        reason: parsed.data.reason,
+        details: parsed.data.details ?? null,
+        status: "PENDING",
+        userId: user.id,
+        articleId: parsed.data.articleId ?? null,
+        commentId: parsed.data.commentId ?? null,
+        createdAt: now,
+        updatedAt: now,
+      })
+    }
+
+    return prisma.report.create({
+      data: {
+        reason: parsed.data.reason,
+        details: parsed.data.details ?? null,
+        status: "PENDING",
+        userId: user.id,
+        articleId: parsed.data.articleId ?? null,
+        commentId: parsed.data.commentId ?? null,
+      },
+    })
+  },
+
+  async listReports(status?: ReportStatus) {
+    if (isLocalMode) {
+      const reports = localDb.getReports(status)
+      return reports.map((r) => {
+        const reporter = localDb.getUserById(r.userId)
+        const article = r.articleId ? localDb.getArticleById(r.articleId) : null
+        const comment = r.commentId ? localDb.getCommentById(r.commentId) : null
+        return {
+          ...r,
+          user: { username: reporter?.username ?? "anon", fullName: reporter?.fullName ?? "Anonim" },
+          article: article ? { id: article.id, title: article.title, slug: article.slug } : null,
+          comment: comment ? { id: comment.id, content: comment.content } : null,
+        }
+      })
+    }
+
+    return prisma.report.findMany({
+      where: status ? { status } : undefined,
+      orderBy: { createdAt: "desc" },
+      include: {
+        user: { select: { username: true, fullName: true } },
+        article: { select: { id: true, title: true, slug: true } },
+        comment: { select: { id: true, content: true } },
+      },
+    })
+  },
+
+  async updateReportStatus(reportId: string, status: ReportStatus) {
+    if (isLocalMode) {
+      localDb.updateReportStatus(reportId, status)
+      return
+    }
+    await prisma.report.update({ where: { id: reportId }, data: { status } })
   },
 }

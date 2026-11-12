@@ -1,26 +1,112 @@
-# Warta Warga — Social News App
+# ClimateStories — Social News & Citizen Journalism Platform
 
-Next.js (App Router) + Tailwind + shadcn/ui + Prisma + Supabase (PostgreSQL + Auth) + Google Drive (image storage).
+**ClimateStories** adalah platform portal berita sosial dan jurnalisme warga modern yang memadukan tata letak editorial majalah (*Hero Bento Grid* & *Editorial Split Layout*) dengan interaksi sosial media aktif (repost, quote opini, diskusi berjenjang, catatan komunitas anti-hoaks, dan moderasi konten).
 
-## Setup
+---
 
-1. `npm install`
-2. Copy `.env.example` to `.env`, fill Supabase + Google Drive service account values.
-   Share the Drive folder with the service account `client_email` as **Editor**.
-3. Supabase: enable Email and Google providers; add `http://localhost:3000/auth/callback` to redirect URLs.
-4. `npm run db:migrate` then `npm run db:seed` (seeds navbar categories).
-5. `npm run dev`
+## Tech Stack Utama
 
-First user: sign up, then set `role = 'ADMIN'` on your row in `User` (SQL editor). Admins/moderators manage headlines and categories at `/admin`.
+- **Framework:** Next.js 16 (App Router) + React 19 + TypeScript
+- **Styling & UI:** Tailwind CSS v4, shadcn/ui primitives, Lucide Icons, TipTap Rich Text Editor
+- **Database & ORM:** Supabase PostgreSQL + Prisma ORM 6
+- **Autentikasi:** Supabase Auth (Email & Password, Google OAuth)
+- **Penyimpanan Media:** Google Drive API v3 (Service Account) + Sharp WebP compression + Edge Caching Proxy (`/api/media/[fileId]`)
 
-## Scripts
+---
 
-`dev`, `build`, `lint`, `typecheck`, `test`, `db:migrate`, `db:seed`.
+## Fitur Utama
 
-## Notes
+1. **Hero Bento Grid & Navigasi Kategori:**
+   - Layout 3 kolom: 1 Headline utama besar (kiri), 1 sub-headline menengah (tengah), dan 3 berita ringkas (kanan).
+   - Filter instan per kategori di navbar (`Nasional`, `Teknologi`, `Ekonomi`, `Olahraga`, `Opini`).
 
-- Mutations: Form/Client → Server Action → `services/*` → Prisma. Business logic lives in `services/`.
-- Images: `POST /api/media/upload` (sharp → WebP ≤ 5 MB → Drive), `GET /api/media/[fileId]` (immutable cached proxy).
-- `/@username` is rewritten to `/profil/[username]` (`@` folders are reserved in the App Router).
-- Article HTML is sanitized with DOMPurify on save and on render.
-- Trust score: like +1, repost +3 for the author; ≥ 50 earns the Verified Contributor badge.
+2. **Editorial Reader View:**
+   - Tampilan baca split: Gambar besar sticky kiri berdampingan dengan lead berita dan **3 Poin Inti Berita (TL;DR Key Takeaways)** di kanan, menyambung teks penuh di bawah.
+   - Dilengkapi tombol navigasi kembali (*Back Button*).
+
+3. **Dual-Mode Repost & Interaksi Sosial:**
+   - *Direct Repost*: Bagikan ulang berita ke feed pengikut dengan 1 klik.
+   - *Quote News (Opini)*: Berikan opini dan analisis kritis di atas kartu berita.
+   - *Like/Upvote*, *Bookmark* (tersimpan), dan *Follow* sesama penulis.
+
+4. **Komentar Berjenjang (*Nested Replies*):**
+   - Diskusi interaktif berjenjang dengan kemampuan membalas komentar, mengedit, atau menghapus komentar milik sendiri.
+
+5. **Sistem Kredibilitas & Anti-Hoaks:**
+   - Wajib mencantumkan rujukan sumber berita dan penandaan jenis berita (*Laporan Langsung* vs *Saduran/Opini*).
+   - **Catatan Komunitas (*Community Notes*)**: Kontributor terverifikasi (*Trust Score* ≥ 50) dapat mengajukan koreksi konteks fakta di bawah artikel.
+   - **Lencana Verified Contributor**: Otomatis didapatkan saat skor kepercayaan mencapai 50+ (Like +1 poin, Repost +3 poin).
+
+6. **Sistem Pelaporan & Panel Moderator (`/admin`):**
+   - Pengguna dapat melaporkan berita atau komentar yang terindikasi hoaks, informasi menyesatkan, atau spam.
+   - Panel khusus moderator untuk menindaklanjuti laporan, mengatur berita headline bento-grid, mengelola kategori, dan peran user.
+
+7. **Pusat Notifikasi (`/notifikasi`):**
+   - Ikon lonceng navbar dengan indikator angka riil jumlah interaksi baru.
+   - Tab filter notifikasi (Suka, Repost, Komentar, Catatan Komunitas, Pengikut Baru).
+
+8. **Custom Dropdown & Search:**
+   - Seluruh komponen seleksi menggunakan custom dropdown modern dengan sudut membulat (*rounded-2xl*), glassmorphism, dan fitur pencarian real-time terintegrasi.
+
+---
+
+## Panduan Instalasi & Menjalankan
+
+### 1. Kloning & Install Dependensi
+```bash
+git clone https://github.com/dmfdzr/news-app.git
+cd news-app
+npm install
+```
+
+### 2. Konfigurasi Environment Variables
+Salin file `.env.example` menjadi `.env`:
+```bash
+cp .env.example .env
+```
+
+Isi variabel konfigurasi pada `.env`:
+```env
+# 1. SUPABASE DATABASE (Prisma Pooler & Direct)
+DATABASE_URL="postgresql://postgres.[PROJECT-REF]:[PASSWORD]@aws-1-[REGION].pooler.supabase.com:6543/postgres?pgbouncer=true"
+DIRECT_URL="postgresql://postgres.[PROJECT-REF]:[PASSWORD]@aws-1-[REGION].pooler.supabase.com:5432/postgres"
+
+# 2. SUPABASE AUTH & API KEYS
+NEXT_PUBLIC_SUPABASE_URL="https://[PROJECT-REF].supabase.co"
+NEXT_PUBLIC_SUPABASE_ANON_KEY="sb_publishable_..."
+
+# 3. GOOGLE DRIVE API (Service Account untuk Upload Gambar)
+GOOGLE_DRIVE_CLIENT_EMAIL="news-uploader@[PROJECT-ID].iam.gserviceaccount.com"
+GOOGLE_DRIVE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
+GOOGLE_DRIVE_FOLDER_ID="1A2b3C4d5E6f7G8h9I0j..."
+
+NEXT_PUBLIC_SITE_URL="http://localhost:3000"
+```
+
+### 3. Migrasi Database & Seeding
+Jalankan migrasi tabel ke PostgreSQL dan semai kategori navbar awal:
+```bash
+npm run db:migrate
+npm run db:seed
+```
+
+### 4. Menjalankan Server Pengembangan
+```bash
+npm run dev
+```
+Buka peramban di [http://localhost:3000](http://localhost:3000).
+
+---
+
+## Daftar Script Tersedia
+
+| Perintah | Deskripsi |
+| :--- | :--- |
+| `npm run dev` | Menjalankan Next.js server dalam mode development |
+| `npm run build` | Menjalankan production build & typecheck |
+| `npm run start` | Menjalankan server hasil production build |
+| `npm run lint` | Menjalankan audit ESLint kode |
+| `npm run typecheck` | Menjalankan pengecekan TypeScript tanpa emit |
+| `npm run test` | Menjalankan unit tests (Node.js test runner) |
+| `npm run db:migrate` | Menerapkan migrasi skema database Prisma |
+| `npm run db:seed` | Menginisialisasi data awal kategori dan admin master |

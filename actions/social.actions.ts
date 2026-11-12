@@ -58,3 +58,23 @@ export async function toggleFollowAction(targetId: string, username: string) {
   revalidatePath("/mengikuti")
   return result
 }
+
+export async function addCommunityNoteAction(articleId: string, slug: string, content: string, sourceUrl?: string) {
+  return run((u) => socialService.addCommunityNote(u, articleId, content, sourceUrl), "Gagal mengirim catatan komunitas.", slug)
+}
+
+export async function deleteCommunityNoteAction(noteId: string, slug: string) {
+  return run((u) => socialService.deleteCommunityNote(u, noteId), "Gagal menghapus catatan komunitas.", slug)
+}
+
+export async function createReportAction(
+  reason: "HOAX" | "SPAM" | "MISLEADING" | "HARASSMENT" | "OTHER",
+  details?: string,
+  articleId?: string,
+  commentId?: string
+) {
+  return run(
+    (u) => socialService.createReport(u, { reason, details, articleId, commentId }),
+    "Tidak dapat mengirim laporan."
+  )
+}

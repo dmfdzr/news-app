@@ -37,7 +37,7 @@ function generateSvgPlaceholder(fileId: string): string {
     <rect width="800" height="600" fill="url(#bg)" />
     <circle cx="400" cy="270" r="48" fill="#ffffff" fill-opacity="0.15" />
     <path d="M380 255h40v30h-40z M375 295h50v6h-50z" fill="#ffffff" fill-opacity="0.7" />
-    <text x="400" y="360" font-family="system-ui, sans-serif" font-size="28" font-weight="700" fill="#ffffff" fill-opacity="0.9" text-anchor="middle">Warta Warga</text>
+    <text x="400" y="360" font-family="system-ui, sans-serif" font-size="28" font-weight="700" fill="#ffffff" fill-opacity="0.9" text-anchor="middle">ClimateStories</text>
     <text x="400" y="392" font-family="system-ui, sans-serif" font-size="16" fill="#ffffff" fill-opacity="0.6" text-anchor="middle">Citizen Journalism &amp; Social News</text>
   </svg>`
 }

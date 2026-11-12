@@ -4,6 +4,7 @@ import { notFound } from "next/navigation"
 import { after } from "next/server"
 
 import { EditorialReader } from "@/components/news/editorial-reader"
+import { BackButton } from "@/components/news/back-button"
 import { ActionBar } from "@/components/social/action-bar"
 import { DiscussionTabs } from "@/components/social/discussion-tabs"
 import { buttonVariants } from "@/components/ui/button"
@@ -58,14 +59,29 @@ export default async function ArticlePage({ params }: Props) {
 
   return (
     <div className="mx-auto flex max-w-6xl flex-col gap-6">
-      {(isAuthor || user?.role === "ADMIN") && (
-        <div className="flex justify-end">
+      <div className="flex items-center justify-between">
+        <BackButton />
+        {(isAuthor || user?.role === "ADMIN") && (
           <Link href={`/edit/${article.id}`} className={cn(buttonVariants({ variant: "outline", size: "sm" }))}>
             Edit berita
           </Link>
-        </div>
-      )}
-      <EditorialReader article={article} />
+        )}
+      </div>
+      <EditorialReader
+        article={article}
+        viewer={
+          user
+            ? {
+                id: user.id,
+                username: user.username,
+                fullName: user.fullName,
+                trustScore: user.trustScore,
+                isVerified: user.isVerified,
+                isStaff,
+              }
+            : null
+        }
+      />
       {article.status === "PUBLISHED" && (
         <>
           <ActionBar

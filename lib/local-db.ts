@@ -7,9 +7,12 @@ import type {
   Bookmark,
   Category,
   Comment,
+  CommunityNote,
   Follow,
   HeadlinePosition,
   Like,
+  Report,
+  ReportStatus,
   Repost,
   Role,
   User,
@@ -24,6 +27,8 @@ type LocalDbSchema = {
   likes: Like[]
   bookmarks: Bookmark[]
   follows: Follow[]
+  communityNotes: CommunityNote[]
+  reports: Report[]
 }
 
 const DB_FILE = path.join(process.cwd(), ".local-db.json")
@@ -36,7 +41,7 @@ function getSeedData(): LocalDbSchema {
       email: "admin@wartawarga.id",
       username: "admin",
       fullName: "Admin Redaksi",
-      bio: "Editor & pengelola platform Warta Warga.",
+      bio: "Editor & pengelola platform ClimateStories.",
       avatarDriveId: "mock-avatar-admin",
       role: "ADMIN" as Role,
       isVerified: true,
@@ -79,6 +84,7 @@ function getSeedData(): LocalDbSchema {
         "Regulasi etika kecerdasan buatan mulai diratifikasi secara nasional.",
         "Kebutuhan talenta digital dan keamanan data meningkat dua kali lipat.",
       ],
+      tags: ["ai", "digital", "inovasi", "teknologi"],
       thumbnailDriveId: "mock-thumb-1",
       imageCaption: "Pusat inovasi teknologi komputasi awan di Jakarta.",
       sourceUrl: "https://kominfo.go.id",
@@ -103,6 +109,7 @@ function getSeedData(): LocalDbSchema {
         "Manufaktur teknologi tinggi menyumbang porsi ekspor terbesar.",
         "Diversifikasi mitra dagang baru memperkuat daya saing.",
       ],
+      tags: ["ekonomi", "ekspor", "neraca-dagang"],
       thumbnailDriveId: "mock-thumb-2",
       imageCaption: "Aktivitas bongkar muat peti kemas di pelabuhan internasional.",
       sourceUrl: "https://kemendag.go.id",
@@ -123,6 +130,7 @@ function getSeedData(): LocalDbSchema {
       excerpt: "Inovasi elektrolit padat berbasis mineral lokal berpotensi menurunkan biaya produksi baterai kendaraan listrik.",
       content: `<p>Tim peneliti gabungan perguruan tinggi negeri sukses mematenkan sel baterai padat berefisiensi tinggi. Pengujian laboratorium menunjukkan degradasi sel yang sangat minim setelah ribuan siklus pengisian cepat.</p>`,
       keyTakeaways: ["Efisiensi pengisian daya meningkat 25%.", "Bahan baku mengoptimalkan mineral lokal terbarukan."],
+      tags: ["riset", "baterai", "teknologi", "ev"],
       thumbnailDriveId: "mock-thumb-3",
       imageCaption: "Prototipe modul baterai di laboratorium teknik elektro.",
       sourceUrl: null,
@@ -143,6 +151,7 @@ function getSeedData(): LocalDbSchema {
       excerpt: "Koperasi nelayan kini terhubung langsung dengan pasar induk perkotaan lewat aplikasi rantai dingin.",
       content: `<p>Program digitalisasi sentra nelayan memangkas rantai distribusi hasil laut hingga 40%. Para pedagang kecil di sentra pengolahan ikan kini menikmati margin pendapatan yang lebih stabil.</p>`,
       keyTakeaways: ["Harga jual tangkapan lebih transparan.", "Limbah pascapanen berkurang drastis."],
+      tags: ["umkm", "pesisir", "ekonomi", "rantai-pasok"],
       thumbnailDriveId: "mock-thumb-4",
       imageCaption: "Pendaratan ikan di dermaga nelayan tradisional.",
       sourceUrl: null,
@@ -163,6 +172,7 @@ function getSeedData(): LocalDbSchema {
       excerpt: "Fokus pada transisi cepat dan koordinasi lini tengah menjadi menu utama pemusatan latihan.",
       content: `<p>Pelatih kepala menegaskan pentingnya konsentrasi penuh sepanjang 90 menit pertandingan. Seluruh pemain dalam kondisi prima menjelang laga penentuan pekan depan.</p>`,
       keyTakeaways: ["Pemusatan latihan intensif digelar di dataran tinggi.", "Rotasi skuad disiapkan untuk mengatasi kelelahan."],
+      tags: ["timnas", "sepakbola", "olahraga"],
       thumbnailDriveId: "mock-thumb-5",
       imageCaption: "Sesi latihan taktik di stadion utama.",
       sourceUrl: null,
@@ -183,6 +193,7 @@ function getSeedData(): LocalDbSchema {
       excerpt: "Pembangunan koridor bus listrik dan jalur rel komuter mempersempit jurang mobilitas warga sub-urban.",
       content: `<p>Keterhubungan antarmoda angkutan umum berhasil meningkatkan minat masyarakat menggunakan transportasi publik hingga 28%. Waktu tempuh komuter berkurang secara signifikan.</p>`,
       keyTakeaways: ["Pengurangan emisi karbon harian di koridor utama.", "Tiket terintegrasi memudahkan perjalanan multi-armada."],
+      tags: ["transportasi", "nasional", "perkotaan"],
       thumbnailDriveId: "mock-thumb-6",
       imageCaption: "Stasiun integrasi antarmoda saat jam sibuk sore.",
       sourceUrl: null,
@@ -203,6 +214,7 @@ function getSeedData(): LocalDbSchema {
       excerpt: "Partisipasi aktif pembaca dalam memeriksa fakta dan membagikan kutipan berbobot menjadi benteng melawan hoaks.",
       content: `<p>Jurnalisme warga bukan sekadar kecepatan menyebarkan kabar, melainkan pertanggungjawaban verifikasi di ruang publik. Model kurasi komunitas memberikan harapan baru bagi kualitas wacana informasi kita.</p>`,
       keyTakeaways: ["Kredibilitas dibangun lewat konsistensi sumber rujukan.", "Umpan balik pembaca menjaga akurasi laporan."],
+      tags: ["opini", "media", "anti-hoax", "literasi"],
       thumbnailDriveId: "mock-thumb-7",
       imageCaption: "Diskusi media dan literasi digital di ruang kerja redaksi.",
       sourceUrl: null,
@@ -264,7 +276,22 @@ function getSeedData(): LocalDbSchema {
     { followerId: "user-admin-1", followingId: "user-jurnalis-2", createdAt: now },
   ]
 
-  return { users, categories, articles, reposts, comments, likes, bookmarks, follows }
+  const communityNotes: CommunityNote[] = [
+    {
+      id: "note-1",
+      content:
+        "Catatan Konteks: Data pertumbuhan efisiensi industri hingga 35% bersumber dari survei Asosiasi Industri Digital Q4 2025 terhadap 250 perusahaan pengguna komputasi awan di Indonesia.",
+      sourceUrl: "https://kominfo.go.id/riset-ai-2025",
+      userId: "user-admin-1",
+      articleId: "art-1",
+      createdAt: now,
+      updatedAt: now,
+    },
+  ]
+
+  const reports: Report[] = []
+
+  return { users, categories, articles, reposts, comments, likes, bookmarks, follows, communityNotes, reports }
 }
 
 function parseDates<T>(item: T): T {
@@ -293,16 +320,22 @@ export class LocalDb {
     }
     try {
       const raw = fs.readFileSync(DB_FILE, "utf-8")
-      const parsed = JSON.parse(raw) as LocalDbSchema
+      const parsed = JSON.parse(raw) as Partial<LocalDbSchema>
+      const articles = (parsed.articles || []).map((a) => ({
+        ...a,
+        tags: Array.isArray(a.tags) ? a.tags : [],
+      }))
       return {
-        users: parsed.users.map(parseDates),
-        categories: parsed.categories.map(parseDates),
-        articles: parsed.articles.map(parseDates),
-        reposts: parsed.reposts.map(parseDates),
-        comments: parsed.comments.map(parseDates),
-        likes: parsed.likes.map(parseDates),
-        bookmarks: parsed.bookmarks.map(parseDates),
-        follows: parsed.follows.map(parseDates),
+        users: (parsed.users || []).map(parseDates),
+        categories: (parsed.categories || []).map(parseDates),
+        articles: articles.map(parseDates),
+        reposts: (parsed.reposts || []).map(parseDates),
+        comments: (parsed.comments || []).map(parseDates),
+        likes: (parsed.likes || []).map(parseDates),
+        bookmarks: (parsed.bookmarks || []).map(parseDates),
+        follows: (parsed.follows || []).map(parseDates),
+        communityNotes: (parsed.communityNotes || []).map(parseDates),
+        reports: (parsed.reports || []).map(parseDates),
       }
     } catch {
       const seed = getSeedData()
@@ -499,6 +532,47 @@ export class LocalDb {
   getUserFollowersCount(userId: string) { return this.data.follows.filter((f) => f.followingId === userId).length }
   getUserFollowingCount(userId: string) { return this.data.follows.filter((f) => f.followerId === userId).length }
   getUserFollowing(userId: string) { return this.data.follows.filter((f) => f.followerId === userId) }
+
+  // --- Community Notes ---
+  getCommunityNotes(articleId: string) {
+    return (this.data.communityNotes || []).filter((n) => n.articleId === articleId)
+  }
+  createCommunityNote(note: CommunityNote) {
+    if (!this.data.communityNotes) this.data.communityNotes = []
+    this.data.communityNotes.push(note)
+    this.save()
+    return note
+  }
+  deleteCommunityNote(id: string) {
+    if (!this.data.communityNotes) return
+    this.data.communityNotes = this.data.communityNotes.filter((n) => n.id !== id)
+    this.save()
+  }
+
+  // --- Reports ---
+  getReports(status?: ReportStatus) {
+    const list = this.data.reports || []
+    return status ? list.filter((r) => r.status === status) : list
+  }
+  createReport(report: Report) {
+    if (!this.data.reports) this.data.reports = []
+    this.data.reports.push(report)
+    this.save()
+    return report
+  }
+  updateReportStatus(id: string, status: ReportStatus) {
+    if (!this.data.reports) return null
+    const idx = this.data.reports.findIndex((r) => r.id === id)
+    if (idx === -1) return null
+    this.data.reports[idx] = { ...this.data.reports[idx], status, updatedAt: new Date() }
+    this.save()
+    return this.data.reports[idx]
+  }
+  deleteReport(id: string) {
+    if (!this.data.reports) return
+    this.data.reports = this.data.reports.filter((r) => r.id !== id)
+    this.save()
+  }
 }
 
 const globalForLocalDb = globalThis as unknown as { localDb?: LocalDb }

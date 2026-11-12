@@ -40,3 +40,8 @@ next-env.d.ts
 !.env.example
 .local-db.json
 .local-media/
+
+# Markdown documentation files (except README.md)
+/*.md
+!/README.md
+

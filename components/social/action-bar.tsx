@@ -5,6 +5,7 @@ import { useOptimistic, useTransition } from "react"
 import { toast } from "sonner"
 
 import { toggleBookmarkAction, toggleLikeAction } from "@/actions/social.actions"
+import { ReportDialog } from "@/components/social/report-dialog"
 import { RepostMenu } from "@/components/social/repost-modal"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -72,6 +73,7 @@ export function ActionBar({ articleId, slug, isAuthor, signedIn, counts, state }
       <a href="#komentar" className="inline-flex h-8 items-center gap-1.5 rounded-4xl border px-3 text-sm font-medium hover:bg-accent">
         <MessageCircleIcon className="size-4" /> {counts.comments}
       </a>
+      <ReportDialog articleId={articleId} />
       <Button
         variant={optimistic.bookmarked ? "default" : "outline"}
         size="sm"

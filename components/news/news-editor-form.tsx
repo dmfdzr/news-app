@@ -9,6 +9,7 @@ import { RichTextEditor } from "@/components/news/rich-text-editor"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Select } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import type { ArticleInput } from "@/services/article.service"
 
@@ -19,6 +20,7 @@ const EMPTY: Values = {
   excerpt: "",
   content: "",
   keyTakeaways: ["", "", ""],
+  tags: [],
   categoryId: "",
   thumbnailDriveId: "",
   imageCaption: "",
@@ -27,8 +29,6 @@ const EMPTY: Values = {
 }
 
 const DRAFT_KEY = "news-editor-draft"
-const selectClass =
-  "h-9 w-full rounded-4xl border border-input bg-input/30 px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
 
 export function NewsEditorForm({
   categories,
@@ -105,19 +105,19 @@ export function NewsEditorForm({
       <div className="grid gap-6 sm:grid-cols-2">
         <div className="flex flex-col gap-2">
           <Label htmlFor="category">Kategori</Label>
-          <select id="category" required className={selectClass} value={values.categoryId} onChange={(e) => set("categoryId", e.target.value)}>
+          <Select id="category" required value={values.categoryId} onChange={(e) => set("categoryId", e.target.value)}>
             <option value="" disabled>Pilih kategori</option>
             {categories.map((c) => (
               <option key={c.id} value={c.id}>{c.name}</option>
             ))}
-          </select>
+          </Select>
         </div>
         <div className="flex flex-col gap-2">
           <Label htmlFor="type">Jenis berita</Label>
-          <select id="type" className={selectClass} value={values.type} onChange={(e) => set("type", e.target.value as Values["type"])}>
+          <Select id="type" value={values.type} onChange={(e) => set("type", e.target.value as Values["type"])}>
             <option value="CITIZEN_REPORT">Laporan Langsung (Citizen Report)</option>
             <option value="OPINION">Saduran / Opini</option>
-          </select>
+          </Select>
         </div>
       </div>
 
@@ -147,13 +147,45 @@ export function NewsEditorForm({
       </fieldset>
 
       <div className="flex flex-col gap-2">
+        <Label htmlFor="tags">Tag Berita (pisahkan dengan koma)</Label>
+        <Input
+          id="tags"
+          placeholder="contoh: ai, teknologi, industri"
+          value={(values.tags ?? []).join(", ")}
+          onChange={(e) =>
+            set(
+              "tags",
+              e.target.value
+                .split(",")
+                .map((t) => t.trim())
+                .filter(Boolean)
+            )
+          }
+        />
+      </div>
+
+      <div className="flex flex-col gap-2">
         <Label>Isi berita</Label>
         <RichTextEditor value={values.content} onChange={(html) => set("content", html)} />
       </div>
 
       <div className="flex flex-col gap-2">
-        <Label htmlFor="sourceUrl">Tautan sumber (opsional)</Label>
-        <Input id="sourceUrl" type="url" placeholder="https://" maxLength={500} value={values.sourceUrl ?? ""} onChange={(e) => set("sourceUrl", e.target.value)} />
+        <div className="flex items-center justify-between">
+          <Label htmlFor="sourceUrl">
+            Tautan Sumber Referensi {values.type === "OPINION" && <span className="text-blue-600 font-semibold">(Wajib untuk Saduran/Opini)</span>}
+          </Label>
+        </div>
+        <Input
+          id="sourceUrl"
+          type="url"
+          placeholder="https://..."
+          maxLength={500}
+          value={values.sourceUrl ?? ""}
+          onChange={(e) => set("sourceUrl", e.target.value)}
+        />
+        <p className="text-xs text-slate-500">
+          Sesuai standar anti-hoaks ClimateStories, cantumkan tautan referensi yang dapat diverifikasi.
+        </p>
       </div>
 
       <div className="flex flex-wrap items-center gap-3">

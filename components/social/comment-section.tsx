@@ -8,6 +8,7 @@ import {
   deleteCommentAction,
   editCommentAction,
 } from "@/actions/social.actions"
+import { ReportDialog } from "@/components/social/report-dialog"
 import { UserAvatar, UserLink } from "@/components/news/user-bits"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
@@ -106,7 +107,7 @@ function CommentItem({ node, ctx, depth }: { node: CommentNode; ctx: Ctx; depth:
         )}
 
         {mode === "view" && ctx.viewer && (
-          <div className="mt-1 flex gap-1">
+          <div className="mt-1 flex items-center gap-1">
             <Button variant="ghost" size="xs" onClick={() => setMode("reply")}>
               Balas
             </Button>
@@ -120,6 +121,7 @@ function CommentItem({ node, ctx, depth }: { node: CommentNode; ctx: Ctx; depth:
                 Hapus
               </Button>
             )}
+            {!own && <ReportDialog commentId={node.id} title={node.content} />}
           </div>
         )}
 

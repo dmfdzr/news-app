@@ -30,6 +30,7 @@ export default async function EditPage({ params }: { params: Promise<{ id: strin
           thumbnailDriveId: article.thumbnailDriveId,
           imageCaption: article.imageCaption ?? "",
           sourceUrl: article.sourceUrl ?? "",
+          tags: article.tags ?? [],
           type: article.type,
         }}
       />
