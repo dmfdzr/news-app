@@ -6,6 +6,7 @@ import { AdminSidebarProvider } from "@/components/admin/admin-sidebar-context"
 import { Navbar } from "@/components/layout/navbar"
 import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "@/components/ui/sonner"
+import { getSiteUrl } from "@/lib/env"
 import { cn } from "@/lib/utils"
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" })
@@ -14,7 +15,7 @@ const jakarta = Plus_Jakarta_Sans({ subsets: ["latin"], variable: "--font-jakart
 export const metadata: Metadata = {
   title: { default: "ClimateStories", template: "%s | ClimateStories" },
   description: "Platform jurnalisme dan berita sosial: tulis, repost, dan diskusikan isu lingkungan dan kabar terkini.",
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"),
+  metadataBase: getSiteUrl(),
   icons: {
     icon: "/icon.png",
     shortcut: "/icon.png",
