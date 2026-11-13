@@ -50,8 +50,12 @@ export async function signInAction(_: ActionState, formData: FormData): Promise<
   const { error } = await supabase.auth.signInWithPassword(parsed.data)
   if (error) return { error: "Email atau kata sandi salah." }
 
-  await getCurrentUser()
-  redirect(safeNext(formData.get("next")))
+  const user = await getCurrentUser()
+  const customNext = formData.get("next")
+  const defaultTarget =
+    user?.role === "ADMIN" || user?.role === "MODERATOR" ? "/admin" : "/"
+
+  redirect(customNext && customNext !== "/" ? safeNext(customNext) : defaultTarget)
 }
 
 export async function signUpAction(_: ActionState, formData: FormData): Promise<ActionState> {

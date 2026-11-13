@@ -37,22 +37,28 @@
    - **Catatan Komunitas (*Community Notes*)**: Kontributor terverifikasi (*Trust Score* ≥ 50) dapat mengajukan koreksi konteks fakta di bawah artikel.
    - **Lencana Verified Contributor**: Otomatis didapatkan saat skor kepercayaan mencapai 50+ (Like +1 poin, Repost +3 poin).
 
-6. **Sistem Pelaporan & Panel Moderator (`/admin`):**
-   - Pengguna dapat melaporkan berita atau komentar yang terindikasi hoaks, informasi menyesatkan, atau spam.
-   - Panel khusus moderator/admin untuk menindaklanjuti laporan, mengatur berita headline bento-grid, dan mengelola kategori.
-   - **Manajemen Pengguna (Admin Master)**: Ubah peran pengguna (`USER`, `MODERATOR`, `ADMIN`), toggle status verified contributor, atur trust score, dan hapus akun pengguna.
+6. **Dashboard Monitoring & Manajemen Aplikasi (`/admin`):**
+   - **Tampilan Khusus Staf**: Admin dan Moderator memiliki antarmuka dashboard monitoring tersendiri tanpa tampilan portal berita publik.
+   - **Sidebar Sticky & Kolapsibel**: Kontrol panel berada di sidebar kiri yang tetap (*sticky*) saat halaman digulir, dapat dibuka-tutup (ikon toggle di bagian bawah sidebar pada desktop & tombol hamburger di navbar pada mobile).
+   - **Menu Ringkasan (*Summary*)**: Panel utama metrik cepat (Laporan Warga, Headline Bento, Kategori Kanal, Total Akun/Berita), metrik operasional (Total Tayangan, Interaksi Publik, Catatan Komunitas, Rasio Penyelesaian Moderasi), distribusi alasan laporan & sebaran kanal, serta Top 5 Berita & Top Kontributor.
+   - **Fitur Monitoring**: Antrean Laporan Warga (hoaks/spam), Monitoring Seluruh Berita Publik (views, kanal, tombol hapus konten pelanggaran), Headline Bento Grid, dan Kategori Kanal.
+   - **Manajemen Pengguna (Admin Master)**: Kontrol seluruh akun user (ganti peran `USER` ↔ `MODERATOR` ↔ `ADMIN`, atur trust score, toggle verified contributor, dan hapus user).
 
-7. **Manajemen Akun Mandiri (`/pengaturan` via Edit Profil):**
+7. **Pemisahan Peran & Navbar Minimalis:**
+   - **Admin & Moderator**: Navbar hanya menampilkan logo/nama aplikasi, switch tema, dan icon profil akun staf. Tidak ada menu portal berita atau tombol tulis berita.
+   - **User (Jurnalis Warga)**: Menikmati portal berita publik lengkap, pencarian, notifikasi, dan tombol `+ Tulis Berita`.
+
+8. **Manajemen Akun Mandiri (`/pengaturan` via Edit Profil):**
    - Akses via tombol "Edit profil" di halaman profil saya (`/@username`).
    - Tab **Profil**: Ubah foto avatar, nama lengkap, username unik, dan bio.
    - Tab **Email Akun**: Perbarui alamat email login akun.
    - Tab **Kata Sandi**: Ganti kata sandi akun login.
 
-8. **Pusat Notifikasi (`/notifikasi`):**
-   - Ikon lonceng navbar dengan badge angka jumlah interaksi baru.
+9. **Pusat Notifikasi (`/notifikasi`):**
+   - Ikon lonceng navbar dengan badge angka jumlah interaksi baru (khusus akun user).
    - Tab filter notifikasi (Suka, Repost, Komentar, Catatan Komunitas, Pengikut Baru).
 
-9. **Custom Dropdown & Search:**
+10. **Custom Dropdown & Search:**
    - Seluruh komponen seleksi menggunakan custom dropdown modern dengan sudut membulat (*rounded-2xl*), glassmorphism, dan fitur pencarian real-time terintegrasi.
 
 ---
@@ -104,6 +110,18 @@ npm run db:seed
 npm run dev
 ```
 Buka peramban di [http://localhost:3000](http://localhost:3000).
+
+---
+
+## Akun Bawaan (Default Accounts)
+
+Setelah menjalankan `npm run db:seed`, akun berikut siap digunakan:
+
+| Role | Email | Password | Username | Keterangan |
+| :--- | :--- | :--- | :--- | :--- |
+| **ADMIN** | `admin@climatestories.id` | `admin123` | `@admin` | Akses penuh manajemen pengguna, moderasi laporan, headline, dan kategori di `/admin`. |
+| **MODERATOR** | `moderator@climatestories.id` | `moderator123` | `@moderator` | Akses panel kurasi headline, kategori, laporan anti-hoaks di `/admin`. |
+| **USER** | `user@climatestories.id` | `user1234` | `@jurnalis_warga` | Pengguna jurnalisme warga (tulis berita, interaksi sosial, bookmark, follow). |
 
 ---
 

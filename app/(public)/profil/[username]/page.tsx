@@ -52,6 +52,11 @@ export default async function ProfilePage({ params }: Props) {
         <div className="flex min-w-0 flex-1 flex-col gap-1">
           <h1 className="font-heading flex items-center gap-2 text-2xl font-extrabold">
             {profile.fullName}
+            {profile.role !== "USER" && (
+              <Badge className={profile.role === "ADMIN" ? "bg-blue-600 text-white" : "bg-amber-600 text-white"}>
+                {profile.role === "ADMIN" ? "SUPER ADMIN" : "MODERATOR"}
+              </Badge>
+            )}
             {profile.isVerified && <BadgeCheckIcon className="size-5 text-emerald-600" aria-label="Verified Contributor" />}
           </h1>
           <p className="text-sm text-slate-600 dark:text-slate-400">@{profile.username} · bergabung {formatDate(profile.createdAt)}</p>
@@ -88,29 +93,31 @@ export default async function ProfilePage({ params }: Props) {
         )}
       </header>
 
-      <Tabs defaultValue="berita">
+      <Tabs defaultValue={profile.role === "USER" ? "berita" : "repost"}>
         <TabsList>
-          <TabsTrigger value="berita">Berita</TabsTrigger>
+          {profile.role === "USER" && <TabsTrigger value="berita">Berita</TabsTrigger>}
           <TabsTrigger value="repost">Repost &amp; Opini</TabsTrigger>
           <TabsTrigger value="komentar">Komentar</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="berita" className="flex flex-col gap-8 pt-4">
-          {isSelf && drafts.length > 0 && (
-            <section aria-labelledby="draft">
-              <h2 id="draft" className="mb-3 text-sm font-bold tracking-wide uppercase">Draft</h2>
-              <ul className="flex flex-col gap-2">
-                {drafts.map((d) => (
-                  <li key={d.id} className="flex items-center justify-between gap-4 rounded-xl bg-slate-100 px-4 py-3 text-sm dark:bg-muted">
-                    <span className="truncate">{d.title}</span>
-                    <Link href={`/edit/${d.id}`} className="font-medium text-blue-600 hover:underline">Lanjutkan</Link>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          )}
-          <ArticleGrid articles={live} empty="Belum ada berita." />
-        </TabsContent>
+        {profile.role === "USER" && (
+          <TabsContent value="berita" className="flex flex-col gap-8 pt-4">
+            {isSelf && drafts.length > 0 && (
+              <section aria-labelledby="draft">
+                <h2 id="draft" className="mb-3 text-sm font-bold tracking-wide uppercase">Draft</h2>
+                <ul className="flex flex-col gap-2">
+                  {drafts.map((d) => (
+                    <li key={d.id} className="flex items-center justify-between gap-4 rounded-xl bg-slate-100 px-4 py-3 text-sm dark:bg-muted">
+                      <span className="truncate">{d.title}</span>
+                      <Link href={`/edit/${d.id}`} className="font-medium text-blue-600 hover:underline">Lanjutkan</Link>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )}
+            <ArticleGrid articles={live} empty="Belum ada berita." />
+          </TabsContent>
+        )}
 
         <TabsContent value="repost" className="pt-4">
           {reposts.length === 0 ? (

@@ -44,7 +44,7 @@ export async function GET(_: Request, { params }: { params: Promise<{ fileId: st
   const { fileId } = await params
   if (!DRIVE_ID_PATTERN.test(fileId)) return new Response("Not found", { status: 404 })
 
-  if (isCloudinaryConfigured() && fileId.startsWith("cs_")) {
+  if (isCloudinaryConfigured() && (fileId.startsWith("cs_") || fileId.startsWith("climatestories/"))) {
     const cloudinaryUrl = getCloudinaryImageUrl(fileId)
     return Response.redirect(cloudinaryUrl, 302)
   }

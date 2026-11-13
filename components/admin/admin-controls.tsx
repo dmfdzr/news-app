@@ -4,6 +4,7 @@ import { useActionState, useEffect, useTransition } from "react"
 import { toast } from "sonner"
 
 import {
+  adminDeleteArticleAction,
   deleteCategoryAction,
   deleteReportedItemAction,
   deleteUserAction,
@@ -250,4 +251,35 @@ export function UserDeleteButton({
     </Button>
   )
 }
+
+export function AdminDeleteArticleButton({
+  articleId,
+  title,
+}: {
+  articleId: string
+  title: string
+}) {
+  const [pending, startTransition] = useTransition()
+
+  return (
+    <Button
+      size="icon-xs"
+      variant="ghost"
+      disabled={pending}
+      aria-label={`Hapus berita ${title}`}
+      className="text-destructive hover:bg-destructive/10"
+      onClick={() => {
+        if (!confirm(`Hapus berita "${title}" secara permanen dari portal?`)) return
+        startTransition(async () => {
+          const r = await adminDeleteArticleAction(articleId)
+          if (r?.error) toast.error(r.error)
+          else toast.success(r?.success ?? "Berita dihapus.")
+        })
+      }}
+    >
+      <Trash2Icon className="size-3.5" />
+    </Button>
+  )
+}
+
 

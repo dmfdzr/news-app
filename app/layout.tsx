@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import { Inter, Plus_Jakarta_Sans } from "next/font/google"
 
 import "./globals.css"
+import { AdminSidebarProvider } from "@/components/admin/admin-sidebar-context"
 import { Navbar } from "@/components/layout/navbar"
 import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "@/components/ui/sonner"
@@ -34,9 +35,11 @@ export default function RootLayout({
     >
       <body>
         <ThemeProvider>
-          <Navbar />
-          <main className="mx-auto w-full max-w-7xl px-4 py-6 lg:px-8">{children}</main>
-          <Toaster richColors />
+          <AdminSidebarProvider>
+            <Navbar />
+            <main className="mx-auto w-full max-w-7xl px-4 py-6 lg:px-8">{children}</main>
+            <Toaster richColors />
+          </AdminSidebarProvider>
         </ThemeProvider>
       </body>
     </html>

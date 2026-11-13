@@ -339,6 +339,9 @@ export const articleService = {
   },
 
   async create(user: User, input: ArticleInput) {
+    if (user.role !== "USER") {
+      throw new ServiceError("Hanya akun warga/penulis (Role USER) yang dapat menulis berita.")
+    }
     const data = parseInput(input)
     if (isLocalMode) {
       const category = localDb.getCategoryById(data.categoryId)
@@ -488,13 +491,44 @@ export const articleService = {
   listForHeadlineAdmin() {
     if (isLocalMode) {
       const list = localDb.getArticles().filter((a) => a.status === "PUBLISHED")
-      return Promise.resolve(list.map((a) => ({ id: a.id, title: a.title, slug: a.slug, headlinePosition: a.headlinePosition })))
+      return Promise.resolve(
+        list.map((a) => {
+          const author = localDb.getUserById(a.authorId)
+          const category = localDb.getCategoryById(a.categoryId)
+          return {
+            id: a.id,
+            title: a.title,
+            slug: a.slug,
+            headlinePosition: a.headlinePosition,
+            viewCount: a.viewCount,
+            publishedAt: a.publishedAt,
+            author: { fullName: author?.fullName ?? "Anonim", username: author?.username ?? "anon" },
+            category: { name: category?.name ?? "Umum" },
+            _count: {
+              comments: localDb.getComments(a.id).length,
+              likes: localDb.getLikesCount(a.id),
+              reposts: localDb.getReposts(a.id).length,
+              communityNotes: localDb.getCommunityNotes(a.id).length,
+            },
+          }
+        })
+      )
     }
     return prisma.article.findMany({
       where: published,
-      select: { id: true, title: true, slug: true, headlinePosition: true },
+      select: {
+        id: true,
+        title: true,
+        slug: true,
+        headlinePosition: true,
+        viewCount: true,
+        publishedAt: true,
+        author: { select: { fullName: true, username: true } },
+        category: { select: { name: true } },
+        _count: { select: { comments: true, likes: true, reposts: true, communityNotes: true } },
+      },
       orderBy: { publishedAt: "desc" },
-      take: 50,
+      take: 100,
     })
   },
 }

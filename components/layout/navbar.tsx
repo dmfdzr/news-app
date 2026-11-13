@@ -1,6 +1,7 @@
 import Link from "next/link"
 
 import { signOutAction } from "@/actions/auth.actions"
+import { AdminMobileMenuButton } from "@/components/admin/admin-mobile-button"
 import { NotificationsMenu } from "@/components/layout/notifications-menu"
 import { ThemeToggle } from "@/components/layout/theme-toggle"
 import { UserAvatar } from "@/components/news/user-bits"
@@ -23,6 +24,53 @@ export async function Navbar() {
   const notifications = user ? await notificationService.list(user.id) : []
   const isStaff = user?.role === "ADMIN" || user?.role === "MODERATOR"
 
+  // JIKA ROLE ADALAH ADMIN ATAU MODERATOR:
+  // Tampilan navbar minimalis khusus dashboard monitoring: Icon hamburger (mobile) + Nama app/logo + Icon profil akun.
+  if (isStaff) {
+    return (
+      <header className="sticky top-0 z-50 w-full border-b border-slate-200 bg-slate-100/95 backdrop-blur dark:border-white/10 dark:bg-background/95">
+        <div className="mx-auto flex h-16 w-full items-center justify-between px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center gap-3">
+            <AdminMobileMenuButton />
+            <Link href="/admin" className="font-heading flex items-center gap-2.5 text-xl font-extrabold tracking-tight">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/logo.png" alt="Logo" className="size-8 object-contain" />
+              <span>
+                Climate<span className="text-emerald-600">Stories</span>
+              </span>
+              <span className="hidden sm:inline-flex rounded-lg bg-blue-600/10 px-2 py-0.5 text-xs font-bold text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
+                {user.role === "ADMIN" ? "Admin Control" : "Moderator"}
+              </span>
+            </Link>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <ThemeToggle />
+            <DropdownMenu>
+              <DropdownMenuTrigger render={<Button variant="ghost" size="icon" aria-label="Menu akun staff" />}>
+                <UserAvatar user={user} />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="min-w-56">
+                <DropdownMenuItem render={<Link href={`/@${user.username}`} />}>Akun staff saya</DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <form action={signOutAction}>
+                  <DropdownMenuItem
+                    nativeButton
+                    render={<button type="submit" className="w-full text-left" />}
+                    variant="destructive"
+                  >
+                    Keluar
+                  </DropdownMenuItem>
+                </form>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </div>
+      </header>
+    )
+  }
+
+  // TAMPILAN NAVBAR UNTUK ROLE USER & GUEST (PORTAL BERITA)
   return (
     <header className="sticky top-0 z-50 w-full border-b border-slate-200 bg-slate-100/90 backdrop-blur dark:border-white/10 dark:bg-background/90">
       <div className="mx-auto flex h-16 max-w-7xl items-center gap-4 px-4 lg:gap-8 lg:px-8">
@@ -66,7 +114,6 @@ export async function Navbar() {
                   <DropdownMenuItem render={<Link href="/tulis" />}>Tulis berita</DropdownMenuItem>
                   <DropdownMenuItem render={<Link href="/mengikuti" />}>Feed mengikuti</DropdownMenuItem>
                   <DropdownMenuItem render={<Link href="/bookmark" />}>Bookmark</DropdownMenuItem>
-                  {isStaff && <DropdownMenuItem render={<Link href="/admin" />}>Panel moderator</DropdownMenuItem>}
                   <DropdownMenuSeparator />
                   <form action={signOutAction}>
                     <DropdownMenuItem

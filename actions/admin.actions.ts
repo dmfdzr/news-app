@@ -140,3 +140,15 @@ export async function deleteReportedItemAction(
   return { success: "Konten berhasil ditindak dan dihapus." }
 }
 
+export async function adminDeleteArticleAction(articleId: string): Promise<ActionState> {
+  const staff = await requireStaff()
+  try {
+    await articleService.remove(staff, articleId)
+  } catch (error) {
+    return toActionError(error, "Gagal menghapus berita.")
+  }
+  revalidatePath("/admin")
+  revalidatePath("/")
+  return { success: "Berita berhasil dihapus." }
+}
+

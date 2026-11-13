@@ -72,6 +72,7 @@ export const userService = {
         fullName: u.fullName,
         bio: u.bio,
         avatarDriveId: u.avatarDriveId,
+        role: u.role,
         isVerified: u.isVerified,
         trustScore: u.trustScore,
         createdAt: u.createdAt,
@@ -91,6 +92,7 @@ export const userService = {
         fullName: true,
         bio: true,
         avatarDriveId: true,
+        role: true,
         isVerified: true,
         trustScore: true,
         createdAt: true,
@@ -345,7 +347,17 @@ export const userService = {
       localDb.deleteUser(id)
       return
     }
+    const target = await prisma.user.findUnique({
+      where: { id },
+      select: { avatarDriveId: true, articles: { select: { thumbnailDriveId: true } } },
+    })
     await prisma.user.delete({ where: { id } })
+    if (target?.avatarDriveId) await deleteFromCloudinary(target.avatarDriveId)
+    if (target?.articles) {
+      for (const a of target.articles) {
+        if (a.thumbnailDriveId) await deleteFromCloudinary(a.thumbnailDriveId)
+      }
+    }
     const admin = getSupabaseAdmin()
     if (admin) {
       await admin.auth.admin.deleteUser(id).catch(() => {})

@@ -25,15 +25,16 @@ export async function POST(request: NextRequest) {
   const kind = form?.get("kind") === "avatar" ? "avatar" : "thumbnail"
 
   try {
+    const isAvatar = kind === "avatar"
     const webp = await sharp(Buffer.from(await file.arrayBuffer()))
       .rotate()
       .resize({
-        width: kind === "avatar" ? 400 : 1600,
-        height: kind === "avatar" ? 400 : undefined,
-        fit: kind === "avatar" ? "cover" : "inside",
+        width: isAvatar ? 256 : 1200,
+        height: isAvatar ? 256 : undefined,
+        fit: isAvatar ? "cover" : "inside",
         withoutEnlargement: true,
       })
-      .webp({ quality: 80 })
+      .webp({ quality: isAvatar ? 75 : 78, effort: 4 })
       .toBuffer()
 
     if (isCloudinaryConfigured()) {

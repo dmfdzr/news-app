@@ -306,10 +306,16 @@ function parseDates<T>(item: T): T {
 }
 
 export class LocalDb {
-  private data: LocalDbSchema
+  // ponytail: lazy-loaded JSON store for local fallback; skipped entirely in production when DATABASE_URL is set
+  private _data?: LocalDbSchema
 
-  constructor() {
-    this.data = this.load()
+  private get data(): LocalDbSchema {
+    if (!this._data) this._data = this.load()
+    return this._data
+  }
+
+  private set data(value: LocalDbSchema) {
+    this._data = value
   }
 
   private load(): LocalDbSchema {

@@ -1,3 +1,5 @@
+import "server-only"
+
 import { v2 as cloudinary } from "cloudinary"
 import { Readable } from "node:stream"
 
@@ -48,6 +50,7 @@ export async function uploadToCloudinary(
     const filename = publicId || `cs_${Date.now()}_${crypto.randomUUID().slice(0, 8)}`
     const uploadStream = c.uploader.upload_stream(
       {
+        folder: "climatestories",
         public_id: filename,
         resource_type: "image",
         format: "webp",
