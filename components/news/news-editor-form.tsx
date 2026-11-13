@@ -7,6 +7,7 @@ import { createArticleAction, deleteArticleAction, updateArticleAction } from "@
 import { ImageUploader } from "@/components/news/image-uploader"
 import { RichTextEditor } from "@/components/news/rich-text-editor"
 import { Button } from "@/components/ui/button"
+import { ConfirmDialog } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select } from "@/components/ui/select"
@@ -44,6 +45,7 @@ export function NewsEditorForm({
     keyTakeaways: [...(initial?.keyTakeaways ?? []), "", "", ""].slice(0, 3),
   }))
   const [pending, startTransition] = useTransition()
+  const [confirmDelete, setConfirmDelete] = useState(false)
   const restored = useRef(false)
 
   // Autosave only unsaved new articles; edits are already persisted server-side.
@@ -82,7 +84,7 @@ export function NewsEditorForm({
   }
 
   function remove() {
-    if (!articleId || !confirm("Hapus berita ini secara permanen?")) return
+    if (!articleId) return
     startTransition(async () => {
       const result = await deleteArticleAction(articleId)
       if (result?.error) toast.error(result.error)
@@ -91,7 +93,7 @@ export function NewsEditorForm({
 
   return (
     <form
-      className="mx-auto flex max-w-3xl flex-col gap-6"
+      className="mx-auto flex w-full max-w-5xl flex-col gap-6"
       onSubmit={(e) => {
         e.preventDefault()
         submit("PUBLISHED")
@@ -194,9 +196,20 @@ export function NewsEditorForm({
           Simpan draft
         </Button>
         {articleId && (
-          <Button type="button" variant="destructive" className="ml-auto" disabled={pending} onClick={remove}>
-            Hapus
-          </Button>
+          <>
+            <Button type="button" variant="destructive" className="ml-auto" disabled={pending} onClick={() => setConfirmDelete(true)}>
+              Hapus
+            </Button>
+            <ConfirmDialog
+              open={confirmDelete}
+              onOpenChange={setConfirmDelete}
+              title="Hapus Berita"
+              description="Apakah Anda yakin ingin menghapus berita ini secara permanen? Tindakan ini tidak dapat dibatalkan."
+              confirmLabel="Ya, Hapus Permanen"
+              pending={pending}
+              onConfirm={remove}
+            />
+          </>
         )}
       </div>
     </form>

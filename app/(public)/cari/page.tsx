@@ -20,8 +20,8 @@ export default async function SearchPage({
 
   return (
     <div>
-      <h1 className="font-heading mb-4 text-3xl font-extrabold tracking-tight">Cari Berita</h1>
-      <form action="/cari" className="mb-8 flex max-w-xl gap-2">
+      <h1 className="font-heading mb-4 text-2xl font-extrabold tracking-tight sm:text-3xl">Cari Berita</h1>
+      <form action="/cari" className="mb-6 flex max-w-xl gap-2 sm:mb-8">
         <Input name="q" defaultValue={term} placeholder="Cari judul atau isi berita..." aria-label="Kata kunci" />
         <Button type="submit">Cari</Button>
       </form>

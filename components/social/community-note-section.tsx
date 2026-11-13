@@ -8,6 +8,7 @@ import { UserLink } from "@/components/news/user-bits"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
+  ConfirmDialog,
   Dialog,
   DialogContent,
   DialogDescription,
@@ -50,6 +51,7 @@ type Props = {
 
 export function CommunityNoteSection({ articleId, slug, notes, viewer }: Props) {
   const [open, setOpen] = useState(false)
+  const [deleteId, setDeleteId] = useState<string | null>(null)
   const [content, setContent] = useState("")
   const [sourceUrl, setSourceUrl] = useState("")
   const [pending, startTransition] = useTransition()
@@ -71,7 +73,6 @@ export function CommunityNoteSection({ articleId, slug, notes, viewer }: Props) 
   }
 
   function remove(id: string) {
-    if (!confirm("Hapus catatan komunitas ini?")) return
     startTransition(async () => {
       const res = await deleteCommunityNoteAction(id, slug)
       if (res?.error) toast.error(res.error)
@@ -103,7 +104,7 @@ export function CommunityNoteSection({ articleId, slug, notes, viewer }: Props) 
                   size="icon-xs"
                   aria-label="Hapus catatan"
                   disabled={pending}
-                  onClick={() => remove(note.id)}
+                  onClick={() => setDeleteId(note.id)}
                   className="text-destructive hover:bg-destructive/10"
                 >
                   <Trash2Icon className="size-3" />
@@ -131,8 +132,8 @@ export function CommunityNoteSection({ articleId, slug, notes, viewer }: Props) 
 
       {canAdd && (
         <div>
-          <Button variant="outline" size="sm" onClick={() => setOpen(true)} className="border-dashed">
-            <ShieldAlertIcon className="size-3.5 text-amber-600" />
+          <Button variant="outline" size="sm" onClick={() => setOpen(true)} className="h-auto w-full justify-start border-dashed py-2 text-left whitespace-normal sm:w-auto sm:justify-center sm:text-center">
+            <ShieldAlertIcon className="size-3.5 shrink-0 text-amber-600" />
             + Ajukan Catatan Konteks / Koreksi Komunitas
           </Button>
 
@@ -181,6 +182,17 @@ export function CommunityNoteSection({ articleId, slug, notes, viewer }: Props) 
           </Dialog>
         </div>
       )}
+      <ConfirmDialog
+        open={deleteId !== null}
+        onOpenChange={(isOpen) => !isOpen && setDeleteId(null)}
+        title="Hapus Catatan Komunitas"
+        description="Apakah Anda yakin ingin menghapus catatan konteks komunitas ini?"
+        confirmLabel="Ya, Hapus"
+        pending={pending}
+        onConfirm={() => {
+          if (deleteId) remove(deleteId)
+        }}
+      />
     </div>
   )
 }

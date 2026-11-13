@@ -2,6 +2,7 @@ import Link from "next/link"
 
 import { signOutAction } from "@/actions/auth.actions"
 import { AdminMobileMenuButton } from "@/components/admin/admin-mobile-button"
+import { AuthDialog } from "@/components/auth/auth-form"
 import { NotificationsMenu } from "@/components/layout/notifications-menu"
 import { ThemeToggle } from "@/components/layout/theme-toggle"
 import { UserAvatar } from "@/components/news/user-bits"
@@ -73,16 +74,16 @@ export async function Navbar() {
   // TAMPILAN NAVBAR UNTUK ROLE USER & GUEST (PORTAL BERITA)
   return (
     <header className="sticky top-0 z-50 w-full border-b border-slate-200 bg-slate-100/90 backdrop-blur dark:border-white/10 dark:bg-background/90">
-      <div className="mx-auto flex h-16 max-w-7xl items-center gap-4 px-4 lg:gap-8 lg:px-8">
-        <Link href="/" className="font-heading flex items-center gap-2 text-xl font-extrabold tracking-tight">
+      <div className="mx-auto flex h-14 max-w-[1600px] items-center gap-2 px-3.5 sm:h-16 sm:gap-4 sm:px-6 lg:gap-8 lg:px-10 xl:px-12">
+        <Link href="/" className="font-heading flex shrink-0 items-center gap-2 text-lg font-extrabold tracking-tight sm:text-xl">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo.png" alt="Logo" className="size-8 object-contain" />
+          <img src="/logo.png" alt="Logo" className="size-7 object-contain sm:size-8" />
           <span>
             Climate<span className="text-emerald-600">Stories</span>
           </span>
         </Link>
 
-        <nav aria-label="Kategori" className="hidden min-w-0 flex-1 items-center gap-6 overflow-x-auto md:flex">
+        <nav aria-label="Kategori" className="hidden min-w-0 flex-1 items-center gap-5 overflow-x-auto md:flex lg:gap-6">
           {categories.map((c) => (
             <Link
               key={c.id}
@@ -94,7 +95,7 @@ export async function Navbar() {
           ))}
         </nav>
 
-        <div className="ml-auto flex items-center gap-2">
+        <div className="ml-auto flex shrink-0 items-center gap-1 sm:gap-2">
           <Link href="/cari" aria-label="Cari berita" className={cn(buttonVariants({ variant: "ghost", size: "icon" }))}>
             <SearchIcon />
           </Link>
@@ -129,20 +130,28 @@ export async function Navbar() {
             </>
           ) : (
             <>
-              <Link href="/masuk" className={cn(buttonVariants({ variant: "ghost", size: "sm" }))}>
-                Masuk
-              </Link>
-              <Link href="/daftar" className={cn(buttonVariants({ size: "sm" }))}>
-                Daftar
-              </Link>
+              <AuthDialog
+                initialMode="masuk"
+                label="Masuk"
+                variant="ghost"
+                size="sm"
+                className="px-2.5 text-xs sm:px-3 sm:text-sm"
+              />
+              <AuthDialog
+                initialMode="daftar"
+                label="Daftar"
+                variant="default"
+                size="sm"
+                className="px-2.5 text-xs sm:px-3 sm:text-sm"
+              />
             </>
           )}
         </div>
       </div>
 
-      <nav aria-label="Kategori (mobile)" className="flex gap-4 overflow-x-auto border-t border-slate-200 px-4 py-2 md:hidden dark:border-white/10">
+      <nav aria-label="Kategori (mobile)" className="flex gap-4 overflow-x-auto border-t border-slate-200 px-3.5 py-2 sm:px-6 md:hidden dark:border-white/10">
         {categories.map((c) => (
-          <Link key={c.id} href={`/kategori/${c.slug}`} className="text-xs font-semibold tracking-wide whitespace-nowrap text-slate-600 uppercase dark:text-slate-300">
+          <Link key={c.id} href={`/kategori/${c.slug}`} className="shrink-0 text-xs font-semibold tracking-wide whitespace-nowrap text-slate-600 uppercase dark:text-slate-300">
             {c.name}
           </Link>
         ))}

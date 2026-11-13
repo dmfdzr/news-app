@@ -1,10 +1,10 @@
 "use client"
 
-import Link from "next/link"
 import { useOptimistic, useTransition } from "react"
 import { toast } from "sonner"
 
 import { toggleBookmarkAction, toggleLikeAction } from "@/actions/social.actions"
+import { AuthDialog } from "@/components/auth/auth-form"
 import { ReportDialog } from "@/components/social/report-dialog"
 import { RepostMenu } from "@/components/social/repost-modal"
 import { Button } from "@/components/ui/button"
@@ -40,13 +40,19 @@ export function ActionBar({ articleId, slug, isAuthor, signedIn, counts, state }
 
   if (!signedIn) {
     return (
-      <div className="flex flex-wrap items-center gap-3 border-y py-3 text-sm text-slate-600 dark:text-slate-400">
-        <span>{counts.likes} suka</span>
-        <span>{counts.reposts} repost</span>
-        <span>{counts.comments} komentar</span>
-        <Link href={`/masuk?next=/berita/${slug}`} className="ml-auto font-medium text-blue-600 hover:underline">
-          Masuk untuk berinteraksi
-        </Link>
+      <div className="flex flex-wrap items-center justify-between gap-2 border-y py-3 text-xs sm:gap-3 sm:text-sm text-slate-600 dark:text-slate-400">
+        <div className="flex items-center gap-3">
+          <span>{counts.likes} suka</span>
+          <span>{counts.reposts} repost</span>
+          <span>{counts.comments} komentar</span>
+        </div>
+        <AuthDialog
+          initialMode="masuk"
+          next={`/berita/${slug}`}
+          label="Masuk untuk berinteraksi"
+          variant="outline"
+          size="xs"
+        />
       </div>
     )
   }

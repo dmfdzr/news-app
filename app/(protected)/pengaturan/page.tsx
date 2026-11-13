@@ -10,7 +10,7 @@ export default async function SettingsPage() {
   const user = await requireUser()
   return (
     <div>
-      <h1 className="font-heading mb-6 text-3xl font-extrabold tracking-tight">Pengaturan Akun</h1>
+      <h1 className="font-heading mb-5 text-2xl font-extrabold tracking-tight sm:mb-6 sm:text-3xl">Pengaturan Akun</h1>
       <ProfileForm
         initial={{
           fullName: user.fullName,

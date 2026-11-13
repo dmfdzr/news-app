@@ -14,11 +14,11 @@ export default async function FollowingFeedPage() {
 
   return (
     <div>
-      <h1 className="font-heading mb-6 text-3xl font-extrabold tracking-tight">Feed Mengikuti</h1>
+      <h1 className="font-heading mb-5 text-2xl font-extrabold tracking-tight sm:mb-6 sm:text-3xl">Feed Mengikuti</h1>
       {feed.length === 0 ? (
         <p className="text-sm text-slate-600 dark:text-slate-400">Ikuti penulis untuk melihat berita dan repost mereka di sini.</p>
       ) : (
-        <ul className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
+        <ul className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 lg:gap-8 2xl:grid-cols-4">
           {feed.map((item) => (
             <li key={item.id} className="flex flex-col gap-2">
               {item.kind === "repost" && (

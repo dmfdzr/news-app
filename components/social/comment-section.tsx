@@ -8,9 +8,11 @@ import {
   deleteCommentAction,
   editCommentAction,
 } from "@/actions/social.actions"
+import { AuthDialog } from "@/components/auth/auth-form"
 import { ReportDialog } from "@/components/social/report-dialog"
 import { UserAvatar, UserLink } from "@/components/news/user-bits"
 import { Button } from "@/components/ui/button"
+import { ConfirmDialog } from "@/components/ui/dialog"
 import { Separator } from "@/components/ui/separator"
 import { Textarea } from "@/components/ui/textarea"
 import { formatDateTime } from "@/lib/format"
@@ -74,12 +76,12 @@ function Composer({
 
 function CommentItem({ node, ctx, depth }: { node: CommentNode; ctx: Ctx; depth: number }) {
   const [mode, setMode] = useState<"view" | "reply" | "edit">("view")
+  const [confirmDelete, setConfirmDelete] = useState(false)
   const [pending, startTransition] = useTransition()
   const own = ctx.viewer?.id === node.user.id
   const canDelete = own || ctx.viewer?.isStaff
 
   function remove() {
-    if (!confirm("Hapus komentar ini beserta balasannya?")) return
     startTransition(async () => {
       const result = await deleteCommentAction(node.id, ctx.slug)
       if (result?.error) toast.error(result.error)
@@ -107,7 +109,7 @@ function CommentItem({ node, ctx, depth }: { node: CommentNode; ctx: Ctx; depth:
         )}
 
         {mode === "view" && ctx.viewer && (
-          <div className="mt-1 flex items-center gap-1">
+          <div className="mt-1 flex flex-wrap items-center gap-1">
             <Button variant="ghost" size="xs" onClick={() => setMode("reply")}>
               Balas
             </Button>
@@ -117,9 +119,20 @@ function CommentItem({ node, ctx, depth }: { node: CommentNode; ctx: Ctx; depth:
               </Button>
             )}
             {canDelete && (
-              <Button variant="ghost" size="xs" onClick={remove} disabled={pending}>
-                Hapus
-              </Button>
+              <>
+                <Button variant="ghost" size="xs" onClick={() => setConfirmDelete(true)} disabled={pending}>
+                  Hapus
+                </Button>
+                <ConfirmDialog
+                  open={confirmDelete}
+                  onOpenChange={setConfirmDelete}
+                  title="Hapus Komentar"
+                  description="Hapus komentar ini beserta seluruh balasannya secara permanen?"
+                  confirmLabel="Ya, Hapus"
+                  pending={pending}
+                  onConfirm={remove}
+                />
+              </>
             )}
             {!own && <ReportDialog commentId={node.id} title={node.content} />}
           </div>
@@ -132,7 +145,7 @@ function CommentItem({ node, ctx, depth }: { node: CommentNode; ctx: Ctx; depth:
         )}
 
         {node.replies.length > 0 && (
-          <ul className={depth >= 4 ? "mt-4 flex flex-col gap-4" : "mt-4 flex flex-col gap-4 border-l pl-4"}>
+          <ul className={depth >= 3 ? "mt-4 flex flex-col gap-4" : "mt-4 flex flex-col gap-4 border-l pl-2.5 sm:pl-4"}>
             {node.replies.map((reply) => (
               <CommentItem key={reply.id} node={reply} ctx={ctx} depth={depth + 1} />
             ))}
@@ -149,7 +162,10 @@ export function CommentList({ comments, ...ctx }: Ctx & { comments: CommentNode[
       {ctx.viewer ? (
         <Composer ctx={ctx} placeholder="Tulis komentar..." />
       ) : (
-        <p className="text-sm text-slate-600 dark:text-slate-400">Masuk untuk ikut berdiskusi.</p>
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-slate-100/80 px-4 py-3 text-sm text-slate-600 dark:bg-muted dark:text-slate-400">
+          <span>Masuk untuk ikut berdiskusi di kolom komentar.</span>
+          <AuthDialog initialMode="masuk" next={`/berita/${ctx.slug}`} label="Masuk untuk Berkomentar" size="sm" />
+        </div>
       )}
       <Separator />
       {comments.length === 0 ? (

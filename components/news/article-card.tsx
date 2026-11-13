@@ -70,7 +70,7 @@ export function ArticleGrid({ articles, empty = "Belum ada berita." }: { article
     return <p className="rounded-2xl bg-slate-100 p-8 text-center text-sm text-slate-600 dark:bg-muted dark:text-slate-400">{empty}</p>
   }
   return (
-    <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
+    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 lg:gap-8 2xl:grid-cols-4">
       {articles.map((a) => (
         <ArticleCardView key={a.id} article={a} />
       ))}

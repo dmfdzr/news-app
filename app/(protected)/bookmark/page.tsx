@@ -12,7 +12,7 @@ export default async function BookmarkPage() {
   const bookmarks = await articleService.listBookmarked(user.id)
   return (
     <div>
-      <h1 className="font-heading mb-6 text-3xl font-extrabold tracking-tight">Berita Tersimpan</h1>
+      <h1 className="font-heading mb-5 text-2xl font-extrabold tracking-tight sm:mb-6 sm:text-3xl">Berita Tersimpan</h1>
       <ArticleGrid articles={bookmarks.map((b) => b.article)} empty="Belum ada berita tersimpan." />
     </div>
   )

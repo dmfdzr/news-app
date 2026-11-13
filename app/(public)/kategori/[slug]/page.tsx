@@ -28,8 +28,8 @@ export default async function CategoryPage({ params, searchParams }: Props) {
 
   return (
     <div>
-      <h1 className="font-heading mb-2 text-3xl font-extrabold tracking-tight">{category.name}</h1>
-      {category.description && <p className="mb-6 text-slate-600 dark:text-slate-400">{category.description}</p>}
+      <h1 className="font-heading mb-2 text-2xl font-extrabold tracking-tight sm:text-3xl">{category.name}</h1>
+      {category.description && <p className="mb-5 text-sm text-slate-600 sm:mb-6 sm:text-base dark:text-slate-400">{category.description}</p>}
       <ArticleGrid articles={result.items} empty="Belum ada berita di kategori ini." />
       <Pagination page={result.page} pageCount={result.pageCount} basePath={`/kategori/${slug}`} />
     </div>

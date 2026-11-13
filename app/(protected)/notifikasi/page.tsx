@@ -29,7 +29,7 @@ function NotificationIcon({ type }: { type: AppNotification["type"] }) {
 
 function NotificationRow({ item }: { item: AppNotification }) {
   return (
-    <li className="flex items-start gap-4 rounded-2xl border border-slate-200/70 bg-card p-4 transition-all hover:border-slate-300 hover:shadow-xs dark:border-white/10 dark:hover:border-white/20">
+    <li className="flex items-start gap-3 rounded-2xl border border-slate-200/70 bg-card p-3 transition-all hover:border-slate-300 hover:shadow-xs sm:gap-4 sm:p-4 dark:border-white/10 dark:hover:border-white/20">
       <div className="relative shrink-0">
         <UserAvatar user={item.actor} size="default" />
         <span className="absolute -bottom-1 -right-1 flex size-5 items-center justify-center rounded-full bg-background shadow-xs ring-1 ring-border">
@@ -91,15 +91,15 @@ export default async function NotificationsPage() {
   const notes = allNotifs.filter((n) => n.type === "NOTE")
 
   return (
-    <div className="mx-auto flex max-w-3xl flex-col gap-6">
-      <header className="flex items-center justify-between">
+    <div className="mx-auto flex w-full max-w-5xl flex-col gap-5 sm:gap-6">
+      <header className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="font-heading text-3xl font-extrabold tracking-tight">Notifikasi</h1>
-          <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+          <h1 className="font-heading text-2xl font-extrabold tracking-tight sm:text-3xl">Notifikasi</h1>
+          <p className="mt-1 text-xs text-slate-600 sm:text-sm dark:text-slate-400">
             Aktivitas interaksi pembaca terhadap berita, opini, dan komentar Anda.
           </p>
         </div>
-        <Badge variant="outline" className="h-7 px-3 text-xs">
+        <Badge variant="outline" className="h-7 shrink-0 px-3 text-xs">
           {allNotifs.length} Aktivitas
         </Badge>
       </header>

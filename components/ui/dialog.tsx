@@ -146,7 +146,57 @@ function DialogDescription({
   )
 }
 
+function ConfirmDialog({
+  open,
+  onOpenChange,
+  title,
+  description,
+  confirmLabel = "Ya, Lanjutkan",
+  cancelLabel = "Batal",
+  variant = "destructive",
+  pending = false,
+  onConfirm,
+}: {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  title: string
+  description: React.ReactNode
+  confirmLabel?: string
+  cancelLabel?: string
+  variant?: "default" | "destructive"
+  pending?: boolean
+  onConfirm: () => void
+}) {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{title}</DialogTitle>
+          <DialogDescription>{description}</DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={pending}>
+            {cancelLabel}
+          </Button>
+          <Button
+            type="button"
+            variant={variant}
+            disabled={pending}
+            onClick={() => {
+              onConfirm()
+              onOpenChange(false)
+            }}
+          >
+            {pending ? "Memproses..." : confirmLabel}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
 export {
+  ConfirmDialog,
   Dialog,
   DialogClose,
   DialogContent,

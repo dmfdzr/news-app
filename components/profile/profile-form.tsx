@@ -39,11 +39,11 @@ export function ProfileForm({
   }, [pwdState])
 
   return (
-    <Tabs defaultValue="profil" className="w-full max-w-2xl">
+    <Tabs defaultValue="profil" className="w-full max-w-4xl">
       <TabsList className="mb-6 grid w-full grid-cols-3">
-        <TabsTrigger value="profil">Profil</TabsTrigger>
-        <TabsTrigger value="email">Email Akun</TabsTrigger>
-        <TabsTrigger value="keamanan">Kata Sandi</TabsTrigger>
+        <TabsTrigger value="profil" className="text-xs sm:text-sm">Profil</TabsTrigger>
+        <TabsTrigger value="email" className="text-xs sm:text-sm">Email Akun</TabsTrigger>
+        <TabsTrigger value="keamanan" className="text-xs sm:text-sm">Kata Sandi</TabsTrigger>
       </TabsList>
 
       {/* TAB 1: INFORMASI PROFIL & USERNAME */}

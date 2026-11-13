@@ -28,9 +28,9 @@ export function EditorialReader({
   showHeaderLabel?: boolean
 }) {
   return (
-    <article className="flex flex-col gap-6">
+    <article className="flex flex-col gap-5 sm:gap-6">
       {showHeaderLabel && (
-        <div className="flex items-center justify-between border-b pb-3">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b pb-3">
           <span className="font-heading text-xs font-black tracking-widest text-slate-500 uppercase dark:text-slate-400">
             TULISAN BERITA
           </span>
@@ -49,17 +49,17 @@ export function EditorialReader({
           </Badge>
           {article.status === "DRAFT" && <Badge variant="destructive">Draft</Badge>}
         </div>
-        <h1 className="font-heading text-3xl font-extrabold tracking-tight lg:text-4xl">{article.title}</h1>
+        <h1 className="font-heading text-2xl leading-tight font-extrabold tracking-tight sm:text-3xl lg:text-4xl">{article.title}</h1>
         <div className="flex items-center gap-3 text-sm text-slate-600 dark:text-slate-400">
           <UserAvatar user={article.author} />
-          <div className="flex flex-col">
+          <div className="flex min-w-0 flex-col">
             <UserLink user={article.author} />
             {article.publishedAt && <time dateTime={article.publishedAt.toISOString()}>{formatDate(article.publishedAt)}</time>}
           </div>
         </div>
       </header>
 
-      <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-12">
+      <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-12 lg:gap-8">
         <figure className="lg:sticky lg:top-24 lg:col-span-5">
           <DriveImage
             driveId={article.thumbnailDriveId}
@@ -72,10 +72,10 @@ export function EditorialReader({
           )}
         </figure>
 
-        <div className="flex flex-col gap-4 lg:col-span-7">
-          {article.excerpt && <p className="text-lg font-medium text-slate-700 dark:text-slate-300">{article.excerpt}</p>}
+        <div className="flex min-w-0 flex-col gap-4 lg:col-span-7">
+          {article.excerpt && <p className="text-base font-medium text-slate-700 sm:text-lg dark:text-slate-300">{article.excerpt}</p>}
           {article.keyTakeaways.length > 0 && (
-            <section aria-labelledby="takeaways" className="rounded-2xl bg-slate-100 p-5 dark:bg-muted">
+            <section aria-labelledby="takeaways" className="rounded-2xl bg-slate-100 p-4 sm:p-5 dark:bg-muted">
               <h2 id="takeaways" className="font-heading mb-2 text-sm font-bold tracking-wide uppercase">
                 3 Poin Inti Berita (TL;DR)
               </h2>
@@ -103,9 +103,9 @@ export function EditorialReader({
                 href={article.sourceUrl}
                 target="_blank"
                 rel="noopener noreferrer nofollow"
-                className="inline-flex items-center gap-1 text-blue-600 hover:underline"
+                className="inline-flex items-center gap-1 break-all text-blue-600 hover:underline"
               >
-                {article.sourceUrl} <ExternalLinkIcon className="size-3" />
+                {article.sourceUrl} <ExternalLinkIcon className="size-3 shrink-0" />
               </a>
             </div>
           )}
@@ -113,7 +113,7 @@ export function EditorialReader({
       </div>
 
       <div
-        className="prose prose-slate dark:prose-invert mt-4 max-w-none"
+        className="prose prose-sm sm:prose-base prose-slate dark:prose-invert mt-2 max-w-none overflow-x-hidden break-words sm:mt-4"
         dangerouslySetInnerHTML={{ __html: sanitizeHtml(article.content) }}
       />
 

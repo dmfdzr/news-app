@@ -38,7 +38,9 @@ export default function RootLayout({
         <ThemeProvider>
           <AdminSidebarProvider>
             <Navbar />
-            <main className="mx-auto w-full max-w-7xl px-4 py-6 lg:px-8">{children}</main>
+            <main className="mx-auto w-full max-w-[1600px] px-3.5 py-4 sm:px-6 sm:py-6 lg:px-10 xl:px-12 has-[[data-admin-dashboard]]:max-w-none has-[[data-admin-dashboard]]:p-0">
+              {children}
+            </main>
             <Toaster richColors />
           </AdminSidebarProvider>
         </ThemeProvider>

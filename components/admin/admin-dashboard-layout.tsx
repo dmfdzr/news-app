@@ -188,7 +188,7 @@ export function AdminDashboardLayout({ staff, articles, categories, users, repor
   ]
 
   return (
-    <div className="relative -mx-4 -my-6 flex min-h-[calc(100vh-4rem)] lg:-mx-8">
+    <div data-admin-dashboard className="relative flex min-h-[calc(100vh-4rem)] w-full">
       {/* MOBILE DRAWER BACKDROP */}
       {isMobileDrawerOpen && (
         <div
@@ -200,8 +200,8 @@ export function AdminDashboardLayout({ staff, articles, categories, users, repor
       {/* SIDEBAR MONITORING DASHBOARD (DESKTOP & MOBILE DRAWER) */}
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-50 flex flex-col border-r border-slate-200 bg-card transition-all duration-300 md:sticky md:top-16 md:z-20 md:h-[calc(100vh-4rem)] dark:border-white/10",
-          sidebarCollapsed ? "md:w-20" : "md:w-64",
+          "fixed inset-y-0 left-0 z-50 flex flex-col border-r border-slate-200 bg-card transition-all duration-300 md:sticky md:top-16 md:z-20 md:h-[calc(100vh-4rem)] md:shrink-0 dark:border-white/10",
+          sidebarCollapsed ? "md:w-20" : "md:w-60 lg:w-64 xl:w-68",
           isMobileDrawerOpen ? "w-68 translate-x-0 shadow-2xl" : "-translate-x-full md:translate-x-0"
         )}
       >
@@ -335,7 +335,7 @@ export function AdminDashboardLayout({ staff, articles, categories, users, repor
       </aside>
 
       {/* MAIN MONITORING CONTENT AREA */}
-      <div className="flex min-w-0 flex-1 flex-col px-4 py-6 md:px-8">
+      <div className="flex min-w-0 flex-1 flex-col px-4 py-6 sm:px-6 lg:px-8 xl:px-10">
         {/* TOP STATUS BAR */}
         <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
           <div>
@@ -368,7 +368,7 @@ export function AdminDashboardLayout({ staff, articles, categories, users, repor
         {activeTab === "ringkasan" && (
           <div className="flex flex-col gap-6">
             {/* BARIS 1: 4 KARTU UTAMA (KLIK UNTUK PINDAH MENU) */}
-            <section aria-label="Statistik Utama" className="grid grid-cols-2 gap-3.5 lg:grid-cols-4">
+            <section aria-label="Statistik Utama" className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 xl:grid-cols-4 2xl:gap-5">
               <Card
                 onClick={() => setActiveTab("laporan")}
                 className="cursor-pointer rounded-2xl border-slate-200/80 p-4 transition-all hover:border-rose-400 hover:shadow-sm dark:border-white/10"
@@ -437,7 +437,7 @@ export function AdminDashboardLayout({ staff, articles, categories, users, repor
             </section>
 
             {/* BARIS 2: METRIK OPERASIONAL & INTERAKSI KOMUNITAS */}
-            <section aria-label="Metrik Operasional & Interaksi" className="grid grid-cols-2 gap-3.5 lg:grid-cols-4">
+            <section aria-label="Metrik Operasional & Interaksi" className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 xl:grid-cols-4 2xl:gap-5">
               <Card className="rounded-2xl border-slate-200/80 p-4 dark:border-white/10">
                 <div className="flex items-center justify-between text-muted-foreground">
                   <span className="text-[11px] font-semibold tracking-wider uppercase">Total Tayangan</span>
@@ -492,7 +492,7 @@ export function AdminDashboardLayout({ staff, articles, categories, users, repor
             </section>
 
             {/* BARIS 3: BREAKDOWN DISTRIBUSI & PERINGKAT */}
-            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+            <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
               {/* DISTRIBUSI LAPORAN & KANAL */}
               <Card className="rounded-2xl border-slate-200/80 dark:border-white/10">
                 <CardHeader className="pb-3">

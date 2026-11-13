@@ -58,7 +58,7 @@ export default async function ArticlePage({ params }: Props) {
     : { liked: false, bookmarked: false, reposted: false, quoteText: null }
 
   return (
-    <div className="mx-auto flex max-w-6xl flex-col gap-6">
+    <div className="flex w-full flex-col gap-6">
       <div className="flex items-center justify-between">
         <BackButton />
         {(isAuthor || user?.role === "ADMIN") && (

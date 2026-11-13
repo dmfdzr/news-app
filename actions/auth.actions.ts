@@ -41,6 +41,7 @@ export async function signInAction(_: ActionState, formData: FormData): Promise<
     if (user) {
       const c = await cookies()
       c.set("local_user_id", user.id, { path: "/" })
+      if (user.role === "ADMIN" || user.role === "MODERATOR") redirect("/admin")
       redirect(safeNext(formData.get("next")))
     }
     return { error: "Email atau kata sandi salah." }
@@ -51,11 +52,11 @@ export async function signInAction(_: ActionState, formData: FormData): Promise<
   if (error) return { error: "Email atau kata sandi salah." }
 
   const user = await getCurrentUser()
-  const customNext = formData.get("next")
-  const defaultTarget =
-    user?.role === "ADMIN" || user?.role === "MODERATOR" ? "/admin" : "/"
+  if (user?.role === "ADMIN" || user?.role === "MODERATOR") {
+    redirect("/admin")
+  }
 
-  redirect(customNext && customNext !== "/" ? safeNext(customNext) : defaultTarget)
+  redirect(safeNext(formData.get("next")))
 }
 
 export async function signUpAction(_: ActionState, formData: FormData): Promise<ActionState> {

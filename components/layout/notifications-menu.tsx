@@ -59,7 +59,7 @@ export function NotificationsMenu({
           </Button>
         }
       />
-      <DropdownMenuContent align="end" className="w-80">
+      <DropdownMenuContent align="end" className="w-[calc(100vw-1.5rem)] max-w-80 sm:w-80">
         <DropdownMenuLabel className="font-heading flex items-center justify-between text-xs font-bold tracking-wider uppercase text-slate-500">
           <span>Notifikasi</span>
           <span className="text-[10px] font-normal text-blue-600">

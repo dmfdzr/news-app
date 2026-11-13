@@ -27,11 +27,11 @@ async function Home() {
     : { liked: false, bookmarked: false, reposted: false, quoteText: null }
 
   return (
-    <div className="flex flex-col gap-12">
+    <div className="flex flex-col gap-8 sm:gap-12">
       <HeroBentoGrid main={main} middle={middle} right={right} />
 
       {featured && (
-        <section aria-label="Tulisan Berita Pilihan" className="flex flex-col gap-6 rounded-3xl bg-slate-50/70 p-6 sm:p-8 dark:bg-muted/30">
+        <section aria-label="Tulisan Berita Pilihan" className="flex flex-col gap-5 rounded-2xl bg-slate-50/70 p-4 sm:gap-6 sm:rounded-3xl sm:p-6 lg:p-8 dark:bg-muted/30">
           <EditorialReader
             article={featured}
             viewer={
@@ -59,7 +59,7 @@ async function Home() {
       )}
 
       <section aria-labelledby="terbaru">
-        <h2 id="terbaru" className="font-heading mb-6 text-2xl font-extrabold tracking-tight lg:text-3xl">
+        <h2 id="terbaru" className="font-heading mb-4 text-xl font-extrabold tracking-tight sm:mb-6 sm:text-2xl lg:text-3xl">
           Berita Terbaru Lainnya
         </h2>
         <ArticleGrid

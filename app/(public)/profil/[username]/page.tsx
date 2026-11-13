@@ -3,6 +3,7 @@ import Link from "next/link"
 import { notFound } from "next/navigation"
 
 import { ArticleCardView, ArticleGrid } from "@/components/news/article-card"
+import { AuthDialog } from "@/components/auth/auth-form"
 import { UserAvatar } from "@/components/news/user-bits"
 import { FollowButton } from "@/components/profile/follow-button"
 import { Badge } from "@/components/ui/badge"
@@ -46,22 +47,22 @@ export default async function ProfilePage({ params }: Props) {
   const live = articles.filter((a) => a.status === "PUBLISHED")
 
   return (
-    <div className="flex flex-col gap-8">
-      <header className="flex flex-col gap-4 rounded-3xl bg-slate-100 p-6 sm:flex-row sm:items-center dark:bg-muted">
+    <div className="flex flex-col gap-6 sm:gap-8">
+      <header className="flex flex-col items-start gap-4 rounded-2xl bg-slate-100 p-4 sm:flex-row sm:items-center sm:rounded-3xl sm:p-6 dark:bg-muted">
         <UserAvatar user={profile} size="lg" />
         <div className="flex min-w-0 flex-1 flex-col gap-1">
-          <h1 className="font-heading flex items-center gap-2 text-2xl font-extrabold">
-            {profile.fullName}
+          <h1 className="font-heading flex flex-wrap items-center gap-2 text-xl font-extrabold sm:text-2xl">
+            <span className="break-words">{profile.fullName}</span>
             {profile.role !== "USER" && (
               <Badge className={profile.role === "ADMIN" ? "bg-blue-600 text-white" : "bg-amber-600 text-white"}>
                 {profile.role === "ADMIN" ? "SUPER ADMIN" : "MODERATOR"}
               </Badge>
             )}
-            {profile.isVerified && <BadgeCheckIcon className="size-5 text-emerald-600" aria-label="Verified Contributor" />}
+            {profile.isVerified && <BadgeCheckIcon className="size-5 shrink-0 text-emerald-600" aria-label="Verified Contributor" />}
           </h1>
-          <p className="text-sm text-slate-600 dark:text-slate-400">@{profile.username} · bergabung {formatDate(profile.createdAt)}</p>
-          {profile.bio && <p className="mt-1 text-sm whitespace-pre-wrap">{profile.bio}</p>}
-          <div className="mt-2 flex flex-wrap items-center gap-3 text-sm">
+          <p className="text-xs text-slate-600 sm:text-sm dark:text-slate-400">@{profile.username} · bergabung {formatDate(profile.createdAt)}</p>
+          {profile.bio && <p className="mt-1 text-sm break-words whitespace-pre-wrap">{profile.bio}</p>}
+          <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-2 text-xs sm:text-sm">
             <span><strong>{profile._count.articles}</strong> berita</span>
             <span><strong>{profile._count.followers}</strong> pengikut</span>
             <span><strong>{profile._count.following}</strong> mengikuti</span>
@@ -81,15 +82,19 @@ export default async function ProfilePage({ params }: Props) {
           </div>
         </div>
         {isSelf ? (
-          <Link href="/pengaturan" className={cn(buttonVariants({ variant: "outline", size: "sm" }))}>
+          <Link href="/pengaturan" className={cn(buttonVariants({ variant: "outline", size: "sm" }), "w-full sm:w-auto")}>
             Edit profil
           </Link>
         ) : viewer ? (
           <FollowButton targetId={profile.id} username={profile.username} following={following} />
         ) : (
-          <Link href={`/masuk?next=/@${profile.username}`} className={cn(buttonVariants({ size: "sm" }))}>
-            Ikuti
-          </Link>
+          <AuthDialog
+            initialMode="masuk"
+            next={`/@${profile.username}`}
+            label="Ikuti"
+            size="sm"
+            className="w-full sm:w-auto"
+          />
         )}
       </header>
 
