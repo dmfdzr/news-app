@@ -2,9 +2,13 @@ import { PrismaClient } from "@prisma/client"
 import { cleanEnv, isLocalMode } from "@/lib/env"
 
 if (process.env.DATABASE_URL) {
-  process.env.DATABASE_URL = cleanEnv(process.env.DATABASE_URL)
+  let dbUrl = cleanEnv(process.env.DATABASE_URL)
+  if (dbUrl.includes("pgbouncer=true") && !dbUrl.includes("connection_limit")) {
+    dbUrl += (dbUrl.includes("?") ? "&" : "?") + "connection_limit=1"
+  }
+  process.env.DATABASE_URL = dbUrl
   if (!process.env.DIRECT_URL) {
-    process.env.DIRECT_URL = process.env.DATABASE_URL
+    process.env.DIRECT_URL = dbUrl
   } else {
     process.env.DIRECT_URL = cleanEnv(process.env.DIRECT_URL)
   }

@@ -23,7 +23,7 @@ const registration = credentials.extend({
 
 function safeNext(value: FormDataEntryValue | null): string {
   const next = typeof value === "string" ? value : "/"
-  return next.startsWith("/") && !next.startsWith("//") ? next : "/"
+  return next.startsWith("/") && !next.startsWith("//") && !next.startsWith("/\\") ? next : "/"
 }
 
 async function origin(): Promise<string> {
