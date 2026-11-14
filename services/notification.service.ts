@@ -1,8 +1,9 @@
 import "server-only"
 
+import { cache } from "react"
 import { isLocalMode } from "@/lib/env"
 import { localDb } from "@/lib/local-db"
-import { prisma } from "@/lib/prisma"
+import { prisma, withCache } from "@/lib/prisma"
 
 export type NotificationType = "REPOST" | "LIKE" | "COMMENT" | "FOLLOW" | "NOTE"
 
@@ -27,7 +28,7 @@ export type AppNotification = {
 }
 
 export const notificationService = {
-  async list(userId: string): Promise<AppNotification[]> {
+  list: cache(async (userId: string): Promise<AppNotification[]> => {
     if (isLocalMode) {
       const myArticles = localDb.getArticles().filter((a) => a.authorId === userId)
       const myArticleIds = new Set(myArticles.map((a) => a.id))
@@ -159,106 +160,108 @@ export const notificationService = {
       return notifs.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
     }
 
-    // Prisma mode: aggregate recent social events for this user
-    const [reposts, likes, comments, follows, notes] = await Promise.all([
-      prisma.repost.findMany({
-        where: { article: { authorId: userId }, userId: { not: userId } },
-        orderBy: { createdAt: "desc" },
-        take: 20,
-        include: {
-          user: { select: { username: true, fullName: true, avatarDriveId: true, isVerified: true } },
-          article: { select: { id: true, title: true, slug: true } },
-        },
-      }),
-      prisma.like.findMany({
-        where: { article: { authorId: userId }, userId: { not: userId } },
-        orderBy: { createdAt: "desc" },
-        take: 20,
-        include: {
-          user: { select: { username: true, fullName: true, avatarDriveId: true, isVerified: true } },
-          article: { select: { id: true, title: true, slug: true } },
-        },
-      }),
-      prisma.comment.findMany({
-        where: { article: { authorId: userId }, userId: { not: userId } },
-        orderBy: { createdAt: "desc" },
-        take: 20,
-        include: {
-          user: { select: { username: true, fullName: true, avatarDriveId: true, isVerified: true } },
-          article: { select: { id: true, title: true, slug: true } },
-        },
-      }),
-      prisma.follow.findMany({
-        where: { followingId: userId },
-        orderBy: { createdAt: "desc" },
-        take: 20,
-        include: {
-          follower: { select: { username: true, fullName: true, avatarDriveId: true, isVerified: true } },
-        },
-      }),
-      prisma.communityNote.findMany({
-        where: { article: { authorId: userId }, userId: { not: userId } },
-        orderBy: { createdAt: "desc" },
-        take: 20,
-        include: {
-          user: { select: { username: true, fullName: true, avatarDriveId: true, isVerified: true } },
-          article: { select: { id: true, title: true, slug: true } },
-        },
-      }),
-    ])
+    return withCache(`notif:${userId}`, 30_000, async () => {
+      // Prisma mode: aggregate recent social events for this user
+      const [reposts, likes, comments, follows, notes] = await Promise.all([
+        prisma.repost.findMany({
+          where: { article: { authorId: userId }, userId: { not: userId } },
+          orderBy: { createdAt: "desc" },
+          take: 20,
+          include: {
+            user: { select: { username: true, fullName: true, avatarDriveId: true, isVerified: true } },
+            article: { select: { id: true, title: true, slug: true } },
+          },
+        }),
+        prisma.like.findMany({
+          where: { article: { authorId: userId }, userId: { not: userId } },
+          orderBy: { createdAt: "desc" },
+          take: 20,
+          include: {
+            user: { select: { username: true, fullName: true, avatarDriveId: true, isVerified: true } },
+            article: { select: { id: true, title: true, slug: true } },
+          },
+        }),
+        prisma.comment.findMany({
+          where: { article: { authorId: userId }, userId: { not: userId } },
+          orderBy: { createdAt: "desc" },
+          take: 20,
+          include: {
+            user: { select: { username: true, fullName: true, avatarDriveId: true, isVerified: true } },
+            article: { select: { id: true, title: true, slug: true } },
+          },
+        }),
+        prisma.follow.findMany({
+          where: { followingId: userId },
+          orderBy: { createdAt: "desc" },
+          take: 20,
+          include: {
+            follower: { select: { username: true, fullName: true, avatarDriveId: true, isVerified: true } },
+          },
+        }),
+        prisma.communityNote.findMany({
+          where: { article: { authorId: userId }, userId: { not: userId } },
+          orderBy: { createdAt: "desc" },
+          take: 20,
+          include: {
+            user: { select: { username: true, fullName: true, avatarDriveId: true, isVerified: true } },
+            article: { select: { id: true, title: true, slug: true } },
+          },
+        }),
+      ])
 
-    const notifs: AppNotification[] = [
-      ...reposts.map((r) => ({
-        id: `notif-rep-${r.id}`,
-        type: "REPOST" as const,
-        actor: r.user,
-        article: r.article,
-        text: r.quoteText ?? "me-repost berita Anda",
-        createdAt: r.createdAt,
-        read: false,
-        href: `/berita/${r.article.slug}`,
-      })),
-      ...likes.map((l) => ({
-        id: `notif-like-${l.id}`,
-        type: "LIKE" as const,
-        actor: l.user,
-        article: l.article,
-        text: "menyukai berita Anda",
-        createdAt: l.createdAt,
-        read: false,
-        href: `/berita/${l.article.slug}`,
-      })),
-      ...comments.map((c) => ({
-        id: `notif-comm-${c.id}`,
-        type: "COMMENT" as const,
-        actor: c.user,
-        article: c.article,
-        text: c.content,
-        createdAt: c.createdAt,
-        read: false,
-        href: `/berita/${c.article.slug}#komentar`,
-      })),
-      ...follows.map((f) => ({
-        id: `notif-fol-${f.follower.username}`,
-        type: "FOLLOW" as const,
-        actor: f.follower,
-        text: "mulai mengikuti Anda",
-        createdAt: f.createdAt,
-        read: false,
-        href: `/@${f.follower.username}`,
-      })),
-      ...notes.map((n) => ({
-        id: `notif-note-${n.id}`,
-        type: "NOTE" as const,
-        actor: n.user,
-        article: n.article,
-        text: "mengajukan Catatan Komunitas pada berita Anda",
-        createdAt: n.createdAt,
-        read: false,
-        href: `/berita/${n.article.slug}`,
-      })),
-    ]
+      const notifs: AppNotification[] = [
+        ...reposts.map((r) => ({
+          id: `notif-rep-${r.id}`,
+          type: "REPOST" as const,
+          actor: r.user,
+          article: r.article,
+          text: r.quoteText ?? "me-repost berita Anda",
+          createdAt: r.createdAt,
+          read: false,
+          href: `/berita/${r.article.slug}`,
+        })),
+        ...likes.map((l) => ({
+          id: `notif-like-${l.id}`,
+          type: "LIKE" as const,
+          actor: l.user,
+          article: l.article,
+          text: "menyukai berita Anda",
+          createdAt: l.createdAt,
+          read: false,
+          href: `/berita/${l.article.slug}`,
+        })),
+        ...comments.map((c) => ({
+          id: `notif-comm-${c.id}`,
+          type: "COMMENT" as const,
+          actor: c.user,
+          article: c.article,
+          text: c.content,
+          createdAt: c.createdAt,
+          read: false,
+          href: `/berita/${c.article.slug}#komentar`,
+        })),
+        ...follows.map((f) => ({
+          id: `notif-fol-${f.follower.username}`,
+          type: "FOLLOW" as const,
+          actor: f.follower,
+          text: "mulai mengikuti Anda",
+          createdAt: f.createdAt,
+          read: false,
+          href: `/@${f.follower.username}`,
+        })),
+        ...notes.map((n) => ({
+          id: `notif-note-${n.id}`,
+          type: "NOTE" as const,
+          actor: n.user,
+          article: n.article,
+          text: "mengajukan Catatan Komunitas pada berita Anda",
+          createdAt: n.createdAt,
+          read: false,
+          href: `/berita/${n.article.slug}`,
+        })),
+      ]
 
-    return notifs.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
-  },
+      return notifs.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+    })
+  }),
 }

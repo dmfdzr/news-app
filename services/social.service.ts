@@ -6,7 +6,7 @@ import { z } from "zod"
 import { isLocalMode } from "@/lib/env"
 import { localDb } from "@/lib/local-db"
 import { ServiceError } from "@/lib/errors"
-import { prisma } from "@/lib/prisma"
+import { invalidateCache, prisma } from "@/lib/prisma"
 
 const VERIFIED_THRESHOLD = 50
 const POINTS = { like: 1, repost: 3 }
@@ -61,6 +61,7 @@ async function adjustTrust(authorId: string, delta: number) {
       data: { trustScore: score, isVerified: score >= VERIFIED_THRESHOLD },
     })
   }
+  invalidateCache("user:", "article:")
 }
 
 async function publishedArticle(articleId: string) {

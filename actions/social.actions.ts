@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache"
 
 import { requireUser } from "@/lib/auth"
 import { toActionError, type ActionState } from "@/lib/errors"
+import { invalidateCache } from "@/lib/prisma"
 import { socialService } from "@/services/social.service"
 
 async function run(
@@ -17,6 +18,7 @@ async function run(
   } catch (error) {
     return toActionError(error, fallback)
   }
+  invalidateCache("article:", "user:", "notif:")
   if (slug) revalidatePath(`/berita/${slug}`)
   revalidatePath("/")
   return {}

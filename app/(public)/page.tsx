@@ -17,14 +17,16 @@ async function Home() {
     getCurrentUser(),
   ])
 
-  const featured = main ? await articleService.getBySlug(main.slug) : null
+  const [featured, state] = await Promise.all([
+    main ? articleService.getBySlug(main.slug) : Promise.resolve(null),
+    user && main
+      ? socialService.getViewerState(user.id, main.id)
+      : Promise.resolve({ liked: false, bookmarked: false, reposted: false, quoteText: null }),
+  ])
+
   const empty = !main && !middle && right.length === 0
   const isAuthor = user && featured ? user.id === featured.authorId : false
   const isStaff = user ? user.role === "ADMIN" || user.role === "MODERATOR" : false
-
-  const state = user && featured
-    ? await socialService.getViewerState(user.id, featured.id)
-    : { liked: false, bookmarked: false, reposted: false, quoteText: null }
 
   return (
     <div className="flex flex-col gap-8 sm:gap-12">

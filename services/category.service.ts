@@ -1,8 +1,9 @@
 import "server-only"
 
+import { cache } from "react"
 import { isLocalMode } from "@/lib/env"
 import { localDb } from "@/lib/local-db"
-import { prisma } from "@/lib/prisma"
+import { invalidateCache, prisma, withCache } from "@/lib/prisma"
 import { ServiceError } from "@/lib/errors"
 import { slugify } from "@/lib/slug"
 import { z } from "zod"
@@ -22,19 +23,23 @@ function parse(input: CategoryInput) {
 }
 
 export const categoryService = {
-  list() {
+  list: cache(() => {
     if (isLocalMode) {
       return Promise.resolve(localDb.getCategories())
     }
-    return prisma.category.findMany({ orderBy: [{ orderIndex: "asc" }, { name: "asc" }] })
-  },
+    return withCache("categories:list", 60_000, () =>
+      prisma.category.findMany({ orderBy: [{ orderIndex: "asc" }, { name: "asc" }] })
+    )
+  }),
 
-  getBySlug(slug: string) {
+  getBySlug: cache((slug: string) => {
     if (isLocalMode) {
       return Promise.resolve(localDb.getCategoryBySlug(slug))
     }
-    return prisma.category.findUnique({ where: { slug } })
-  },
+    return withCache(`categories:slug:${slug}`, 60_000, () =>
+      prisma.category.findUnique({ where: { slug } })
+    )
+  }),
 
   async create(input: CategoryInput) {
     const data = parse(input)
@@ -50,13 +55,16 @@ export const categoryService = {
         orderIndex: data.orderIndex,
         createdAt: new Date(),
       })
+      invalidateCache("categories:")
       return cat
     }
     const exists = await prisma.category.findFirst({
       where: { OR: [{ slug }, { name: data.name }] },
     })
     if (exists) throw new ServiceError("Kategori sudah ada.")
-    return prisma.category.create({ data: { ...data, slug } })
+    const created = await prisma.category.create({ data: { ...data, slug } })
+    invalidateCache("categories:")
+    return created
   },
 
   async update(id: string, input: CategoryInput) {
@@ -70,13 +78,16 @@ export const categoryService = {
         orderIndex: data.orderIndex,
       })
       if (!updated) throw new ServiceError("Kategori tidak ditemukan.")
+      invalidateCache("categories:", "article:")
       return updated
     }
     const clash = await prisma.category.findFirst({
       where: { id: { not: id }, name: data.name },
     })
     if (clash) throw new ServiceError("Nama kategori sudah dipakai.")
-    return prisma.category.update({ where: { id }, data })
+    const updated = await prisma.category.update({ where: { id }, data })
+    invalidateCache("categories:", "article:")
+    return updated
   },
 
   async remove(id: string) {
@@ -84,10 +95,12 @@ export const categoryService = {
       const used = localDb.getArticles().filter((a) => a.categoryId === id).length
       if (used > 0) throw new ServiceError("Kategori masih dipakai oleh berita.")
       localDb.deleteCategory(id)
+      invalidateCache("categories:")
       return
     }
     const used = await prisma.article.count({ where: { categoryId: id } })
     if (used > 0) throw new ServiceError("Kategori masih dipakai oleh berita.")
     await prisma.category.delete({ where: { id } })
+    invalidateCache("categories:")
   },
 }

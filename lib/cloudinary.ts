@@ -2,11 +2,20 @@ import "server-only"
 
 import { v2 as cloudinary } from "cloudinary"
 import { Readable } from "node:stream"
+import { cleanEnv } from "@/lib/env"
+
+function resolveCloudName(): string {
+  return (
+    cleanEnv(process.env.CLOUDINARY_CLOUD_NAME) ||
+    cleanEnv(process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME) ||
+    cleanEnv(process.env.CLOUDINARY_URL?.split("@")[1])
+  )
+}
 
 function getCloudinary() {
-  const cloudName = process.env.CLOUDINARY_CLOUD_NAME
-  const apiKey = process.env.CLOUDINARY_API_KEY
-  const apiSecret = process.env.CLOUDINARY_API_SECRET
+  const cloudName = resolveCloudName()
+  const apiKey = cleanEnv(process.env.CLOUDINARY_API_KEY)
+  const apiSecret = cleanEnv(process.env.CLOUDINARY_API_SECRET)
 
   if (cloudName && apiKey && apiSecret) {
     cloudinary.config({
@@ -28,10 +37,10 @@ function getCloudinary() {
 
 export function isCloudinaryConfigured(): boolean {
   return Boolean(
-    (process.env.CLOUDINARY_CLOUD_NAME &&
-      process.env.CLOUDINARY_API_KEY &&
-      process.env.CLOUDINARY_API_SECRET) ||
-      process.env.CLOUDINARY_URL
+    (resolveCloudName() &&
+      cleanEnv(process.env.CLOUDINARY_API_KEY) &&
+      cleanEnv(process.env.CLOUDINARY_API_SECRET)) ||
+      cleanEnv(process.env.CLOUDINARY_URL)
   )
 }
 
@@ -81,9 +90,10 @@ export async function deleteFromCloudinary(fileId: string | null | undefined): P
 }
 
 export function getCloudinaryImageUrl(publicId: string): string {
-  const cloudName = process.env.CLOUDINARY_CLOUD_NAME
+  const cloudName = resolveCloudName()
   if (cloudName) {
-    return `https://res.cloudinary.com/${cloudName}/image/upload/f_auto,q_auto/${publicId}`
+    const normalizedId = publicId.startsWith("cs_") ? `climatestories/${publicId}` : publicId
+    return `https://res.cloudinary.com/${cloudName}/image/upload/f_auto,q_auto/${normalizedId}`
   }
   return `/api/media/${publicId}`
 }

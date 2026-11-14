@@ -31,10 +31,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function ProfilePage({ params }: Props) {
   const { username } = await params
   const clean = decodeURIComponent(username).replace(/^@/, "")
-  const profile = await userService.getByUsername(clean)
+  const [profile, viewer] = await Promise.all([
+    userService.getByUsername(clean),
+    getCurrentUser(),
+  ])
   if (!profile) notFound()
 
-  const viewer = await getCurrentUser()
   const isSelf = viewer?.id === profile.id
   const [articles, reposts, comments, following] = await Promise.all([
     articleService.listByAuthor(profile.id, isSelf),

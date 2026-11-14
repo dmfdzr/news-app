@@ -7,7 +7,7 @@ import { requireUser } from "@/lib/auth"
 import { isLocalMode } from "@/lib/env"
 import { toActionError, type ActionState } from "@/lib/errors"
 import { localDb } from "@/lib/local-db"
-import { prisma } from "@/lib/prisma"
+import { invalidateCache, prisma } from "@/lib/prisma"
 import { createClient } from "@/lib/supabase/server"
 import { userService } from "@/services/user.service"
 
@@ -61,6 +61,7 @@ export async function updateEmailAction(_: ActionState, formData: FormData): Pro
       where: { id: user.id },
       data: { email: newEmail },
     })
+    invalidateCache("user:")
   } catch (error) {
     return toActionError(error, "Gagal memperbarui email.")
   }

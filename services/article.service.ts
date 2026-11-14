@@ -1,6 +1,7 @@
 import "server-only"
 
 import { Prisma, type Article, type HeadlinePosition, type User } from "@prisma/client"
+import { cache } from "react"
 import { z } from "zod"
 
 import { isLocalMode } from "@/lib/env"
@@ -8,7 +9,7 @@ import { localDb } from "@/lib/local-db"
 import { ServiceError } from "@/lib/errors"
 import { deleteFromCloudinary } from "@/lib/cloudinary"
 import { DRIVE_ID_PATTERN } from "@/lib/media"
-import { prisma } from "@/lib/prisma"
+import { invalidateCache, prisma, withCache } from "@/lib/prisma"
 import { sanitizeHtml } from "@/lib/sanitize"
 import { slugify, withSuffix } from "@/lib/slug"
 import { stripHtml } from "@/lib/format"
@@ -128,7 +129,7 @@ async function uniqueSlug(title: string): Promise<string> {
 export type PublishedListInput = { categorySlug?: string; q?: string; page?: number }
 
 export const articleService = {
-  async getHome() {
+  getHome: cache(async () => {
     if (isLocalMode) {
       const all = localDb.getArticles().filter((a) => a.status === "PUBLISHED")
       let main = all.find((a) => a.headlinePosition === "MAIN_LEFT")
@@ -149,33 +150,35 @@ export const articleService = {
       }
     }
 
-    const [headlines, latest] = await Promise.all([
-      prisma.article.findMany({
-        where: { ...published, headlinePosition: { not: "NONE" } },
-        select: cardSelect,
-        orderBy: { publishedAt: "desc" },
-      }),
-      prisma.article.findMany({
-        where: published,
-        select: cardSelect,
-        orderBy: { publishedAt: "desc" },
-        take: 24,
-      }),
-    ])
+    return withCache("article:home", 30_000, async () => {
+      const [headlines, latest] = await Promise.all([
+        prisma.article.findMany({
+          where: { ...published, headlinePosition: { not: "NONE" } },
+          select: cardSelect,
+          orderBy: { publishedAt: "desc" },
+        }),
+        prisma.article.findMany({
+          where: published,
+          select: cardSelect,
+          orderBy: { publishedAt: "desc" },
+          take: 24,
+        }),
+      ])
 
-    let main = headlines.find((a) => a.headlinePosition === "MAIN_LEFT")
-    let middle = headlines.find((a) => a.headlinePosition === "MIDDLE_CENTER")
-    const right = headlines.filter((a) => a.headlinePosition === "RIGHT_LIST").slice(0, RIGHT_LIST_SIZE)
+      let main = headlines.find((a) => a.headlinePosition === "MAIN_LEFT")
+      let middle = headlines.find((a) => a.headlinePosition === "MIDDLE_CENTER")
+      const right = headlines.filter((a) => a.headlinePosition === "RIGHT_LIST").slice(0, RIGHT_LIST_SIZE)
 
-    // Empty slots fall back to the newest articles so the grid is never broken.
-    const used = new Set([main, middle, ...right].filter(Boolean).map((a) => a!.id))
-    const pool = latest.filter((a) => !used.has(a.id))
-    main ??= pool.shift()
-    middle ??= pool.shift()
-    while (right.length < RIGHT_LIST_SIZE && pool.length > 0) right.push(pool.shift()!)
+      // Empty slots fall back to the newest articles so the grid is never broken.
+      const used = new Set([main, middle, ...right].filter(Boolean).map((a) => a!.id))
+      const pool = latest.filter((a) => !used.has(a.id))
+      main ??= pool.shift()
+      middle ??= pool.shift()
+      while (right.length < RIGHT_LIST_SIZE && pool.length > 0) right.push(pool.shift()!)
 
-    return { main, middle, right, more: pool }
-  },
+      return { main, middle, right, more: pool }
+    })
+  }),
 
   async listPublished({ categorySlug, q, page = 1 }: PublishedListInput) {
     if (isLocalMode) {
@@ -201,35 +204,43 @@ export const articleService = {
     }
 
     const term = q?.trim()
-    const where: Prisma.ArticleWhereInput = {
-      ...published,
-      ...(categorySlug ? { category: { slug: categorySlug } } : {}),
-      ...(term
-        ? {
-            OR: [
-              { title: { contains: term, mode: "insensitive" } },
-              { excerpt: { contains: term, mode: "insensitive" } },
-              { content: { contains: term, mode: "insensitive" } },
-              { tags: { has: term.toLowerCase() } },
-            ],
-          }
-        : {}),
-    }
     const current = Math.max(1, Math.floor(page) || 1)
-    const [items, total] = await Promise.all([
-      prisma.article.findMany({
-        where,
-        select: cardSelect,
-        orderBy: { publishedAt: "desc" },
-        skip: (current - 1) * PAGE_SIZE,
-        take: PAGE_SIZE,
-      }),
-      prisma.article.count({ where }),
-    ])
-    return { items, total, page: current, pageCount: Math.max(1, Math.ceil(total / PAGE_SIZE)) }
+
+    const fetcher = async () => {
+      const where: Prisma.ArticleWhereInput = {
+        ...published,
+        ...(categorySlug ? { category: { slug: categorySlug } } : {}),
+        ...(term
+          ? {
+              OR: [
+                { title: { contains: term, mode: "insensitive" } },
+                { excerpt: { contains: term, mode: "insensitive" } },
+                { content: { contains: term, mode: "insensitive" } },
+                { tags: { has: term.toLowerCase() } },
+              ],
+            }
+          : {}),
+      }
+      const [items, total] = await Promise.all([
+        prisma.article.findMany({
+          where,
+          select: cardSelect,
+          orderBy: { publishedAt: "desc" },
+          skip: (current - 1) * PAGE_SIZE,
+          take: PAGE_SIZE,
+        }),
+        prisma.article.count({ where }),
+      ])
+      return { items, total, page: current, pageCount: Math.max(1, Math.ceil(total / PAGE_SIZE)) }
+    }
+
+    if (!term) {
+      return withCache(`article:list:${categorySlug ?? "all"}:${current}`, 30_000, fetcher)
+    }
+    return fetcher()
   },
 
-  async getBySlug(slug: string) {
+  getBySlug: cache(async (slug: string) => {
     if (isLocalMode) {
       const a = localDb.getArticleBySlug(slug)
       if (!a) return null
@@ -271,23 +282,25 @@ export const articleService = {
       }
     }
 
-    return prisma.article.findUnique({
-      where: { slug },
-      include: {
-        author: {
-          select: { id: true, username: true, fullName: true, avatarDriveId: true, isVerified: true, bio: true },
-        },
-        category: { select: { id: true, name: true, slug: true } },
-        communityNotes: {
-          include: {
-            user: { select: { username: true, fullName: true, avatarDriveId: true, isVerified: true } },
+    return withCache(`article:slug:${slug}`, 30_000, () =>
+      prisma.article.findUnique({
+        where: { slug },
+        include: {
+          author: {
+            select: { id: true, username: true, fullName: true, avatarDriveId: true, isVerified: true, bio: true },
           },
-          orderBy: { createdAt: "desc" },
+          category: { select: { id: true, name: true, slug: true } },
+          communityNotes: {
+            include: {
+              user: { select: { username: true, fullName: true, avatarDriveId: true, isVerified: true } },
+            },
+            orderBy: { createdAt: "desc" },
+          },
+          _count: { select: { comments: true, reposts: true, likes: true } },
         },
-        _count: { select: { comments: true, reposts: true, likes: true } },
-      },
-    })
-  },
+      })
+    )
+  }),
 
   getById(id: string) {
     if (isLocalMode) {
@@ -369,7 +382,7 @@ export const articleService = {
     const category = await prisma.category.findUnique({ where: { id: data.categoryId } })
     if (!category) throw new ServiceError("Kategori tidak ditemukan.")
 
-    return prisma.article.create({
+    const created = await prisma.article.create({
       data: {
         ...data,
         slug: await uniqueSlug(data.title),
@@ -377,6 +390,8 @@ export const articleService = {
         publishedAt: data.status === "PUBLISHED" ? new Date() : null,
       },
     })
+    invalidateCache("article:", "user:")
+    return created
   },
 
   async update(user: User, id: string, input: ArticleInput) {
@@ -396,6 +411,7 @@ export const articleService = {
         ...(data.status === "DRAFT" ? { headlinePosition: "NONE" } : {}),
       })
       if (!updated) throw new ServiceError("Gagal memperbarui berita.")
+      invalidateCache("article:")
       return updated
     }
 
@@ -414,6 +430,7 @@ export const articleService = {
       },
     })
     if (existing.thumbnailDriveId !== data.thumbnailDriveId) await deleteFromCloudinary(existing.thumbnailDriveId)
+    invalidateCache("article:")
     return updated
   },
 
@@ -423,6 +440,7 @@ export const articleService = {
       if (!existing) throw new ServiceError("Berita tidak ditemukan.")
       if (!canManage(user, existing.authorId)) throw new ServiceError("Anda tidak berhak menghapus berita ini.")
       localDb.deleteArticle(id)
+      invalidateCache("article:", "user:")
       return
     }
 
@@ -432,6 +450,7 @@ export const articleService = {
 
     await prisma.article.delete({ where: { id } })
     await deleteFromCloudinary(existing.thumbnailDriveId)
+    invalidateCache("article:", "user:")
   },
 
   async setHeadline(id: string, position: HeadlinePosition) {
@@ -486,6 +505,7 @@ export const articleService = {
       }
       await tx.article.update({ where: { id }, data: { headlinePosition: position } })
     })
+    invalidateCache("article:")
   },
 
   listForHeadlineAdmin() {

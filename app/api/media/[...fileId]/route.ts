@@ -8,6 +8,17 @@ export const runtime = "nodejs"
 
 const LOCAL_MEDIA_DIR = path.join(process.cwd(), ".local-media")
 
+const globalForMedia = globalThis as unknown as {
+  mediaBufferCache?: Map<string, { buffer: ArrayBuffer; contentType: string }>
+}
+const mediaBufferCache =
+  globalForMedia.mediaBufferCache ?? new Map<string, { buffer: ArrayBuffer; contentType: string }>()
+globalForMedia.mediaBufferCache = mediaBufferCache
+
+const CACHE_HEADERS = {
+  "Cache-Control": "public, max-age=31536000, s-maxage=31536000, immutable",
+}
+
 function generateSvgPlaceholder(fileId: string): string {
   const isAvatar = fileId.includes("avatar")
   if (isAvatar) {
@@ -40,13 +51,43 @@ function generateSvgPlaceholder(fileId: string): string {
   </svg>`
 }
 
-export async function GET(_: Request, { params }: { params: Promise<{ fileId: string }> }) {
-  const { fileId } = await params
+export async function GET(_: Request, { params }: { params: Promise<{ fileId: string[] }> }) {
+  const { fileId: segments } = await params
+  const fileId = segments.join("/")
   if (!DRIVE_ID_PATTERN.test(fileId)) return new Response("Not found", { status: 404 })
 
+  const cached = mediaBufferCache.get(fileId)
+  if (cached) {
+    return new Response(cached.buffer, {
+      headers: {
+        "Content-Type": cached.contentType,
+        ...CACHE_HEADERS,
+      },
+    })
+  }
+
   if (isCloudinaryConfigured() && (fileId.startsWith("cs_") || fileId.startsWith("climatestories/"))) {
-    const cloudinaryUrl = getCloudinaryImageUrl(fileId)
-    return Response.redirect(cloudinaryUrl, 302)
+    try {
+      const cloudinaryUrl = getCloudinaryImageUrl(fileId)
+      const upstream = await fetch(cloudinaryUrl)
+      if (upstream.ok) {
+        const buffer = await upstream.arrayBuffer()
+        const contentType = upstream.headers.get("content-type") || "image/webp"
+        if (mediaBufferCache.size > 100) {
+          const oldestKey = mediaBufferCache.keys().next().value
+          if (oldestKey) mediaBufferCache.delete(oldestKey)
+        }
+        mediaBufferCache.set(fileId, { buffer, contentType })
+        return new Response(buffer, {
+          headers: {
+            "Content-Type": contentType,
+            ...CACHE_HEADERS,
+          },
+        })
+      }
+    } catch (err) {
+      console.error("Cloudinary proxy fetch error:", err)
+    }
   }
 
   const localFilePath = path.join(LOCAL_MEDIA_DIR, `${fileId}.webp`)
@@ -55,7 +96,7 @@ export async function GET(_: Request, { params }: { params: Promise<{ fileId: st
     return new Response(buffer, {
       headers: {
         "Content-Type": "image/webp",
-        "Cache-Control": "public, max-age=31536000, s-maxage=31536000, immutable",
+        ...CACHE_HEADERS,
       },
     })
   }
@@ -65,7 +106,7 @@ export async function GET(_: Request, { params }: { params: Promise<{ fileId: st
   return new Response(svg, {
     headers: {
       "Content-Type": "image/svg+xml",
-      "Cache-Control": "public, max-age=31536000, s-maxage=31536000, immutable",
+      ...CACHE_HEADERS,
     },
   })
 }

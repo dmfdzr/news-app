@@ -2,7 +2,16 @@ import assert from "node:assert/strict"
 import { test } from "node:test"
 
 import { initials, stripHtml } from "./format.ts"
+import { mediaUrl } from "./media.ts"
 import { sanitizeHtml } from "./sanitize.ts"
+
+test("mediaUrl", () => {
+  assert.equal(
+    mediaUrl("climatestories/cs_thumbnail_123"),
+    "/api/media/climatestories/cs_thumbnail_123?v=2"
+  )
+  assert.equal(mediaUrl("mock-thumb-1"), "/api/media/mock-thumb-1?v=2")
+})
 
 test("initials", () => {
   assert.equal(initials("Budi Santoso"), "BS")

@@ -32,6 +32,17 @@ export async function updateSession(request: NextRequest) {
 
   let response = NextResponse.next({ request })
 
+  const hasAuthCookie = request.cookies.getAll().some((c) => c.name.startsWith("sb-"))
+  if (!hasAuthCookie) {
+    if (isProtected) {
+      const url = request.nextUrl.clone()
+      url.pathname = "/masuk"
+      url.search = `?next=${encodeURIComponent(pathname)}`
+      return NextResponse.redirect(url)
+    }
+    return response
+  }
+
   try {
     const supabaseUrl = cleanEnv(process.env.NEXT_PUBLIC_SUPABASE_URL)
     const supabaseAnonKey = cleanEnv(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
@@ -50,10 +61,10 @@ export async function updateSession(request: NextRequest) {
     })
 
     const {
-      data: { user },
-    } = await supabase.auth.getUser()
+      data: { session },
+    } = await supabase.auth.getSession()
 
-    if (!user && isProtected) {
+    if (!session?.user && isProtected) {
       const url = request.nextUrl.clone()
       url.pathname = "/masuk"
       url.search = `?next=${encodeURIComponent(pathname)}`

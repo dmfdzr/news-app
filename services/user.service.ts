@@ -1,6 +1,7 @@
 import "server-only"
 
 import type { User } from "@prisma/client"
+import { cache } from "react"
 import { z } from "zod"
 
 import { isLocalMode } from "@/lib/env"
@@ -9,7 +10,7 @@ import { ServiceError } from "@/lib/errors"
 import { DRIVE_ID_PATTERN } from "@/lib/media"
 import { deleteFromCloudinary } from "@/lib/cloudinary"
 import { getSupabaseAdmin } from "@/lib/supabase/admin"
-import { prisma } from "@/lib/prisma"
+import { invalidateCache, prisma, withCache } from "@/lib/prisma"
 import { cardSelect, type ArticleCard } from "@/services/article.service"
 
 const profileSchema = z.object({
@@ -60,7 +61,7 @@ function toLocalCard(articleId: string): ArticleCard | null {
 }
 
 export const userService = {
-  getByUsername(username: string) {
+  getByUsername: cache((username: string) => {
     const clean = decodeURIComponent(username).replace(/^@/, "").toLowerCase()
     if (isLocalMode) {
       const u = localDb.getUserByUsername(clean)
@@ -84,22 +85,24 @@ export const userService = {
       })
     }
 
-    return prisma.user.findUnique({
-      where: { username: clean },
-      select: {
-        id: true,
-        username: true,
-        fullName: true,
-        bio: true,
-        avatarDriveId: true,
-        role: true,
-        isVerified: true,
-        trustScore: true,
-        createdAt: true,
-        _count: { select: { followers: true, following: true, articles: { where: { status: "PUBLISHED" } } } },
-      },
-    })
-  },
+    return withCache(`user:username:${clean}`, 30_000, () =>
+      prisma.user.findUnique({
+        where: { username: clean },
+        select: {
+          id: true,
+          username: true,
+          fullName: true,
+          bio: true,
+          avatarDriveId: true,
+          role: true,
+          isVerified: true,
+          trustScore: true,
+          createdAt: true,
+          _count: { select: { followers: true, following: true, articles: { where: { status: "PUBLISHED" } } } },
+        },
+      })
+    )
+  }),
 
   listReposts(userId: string) {
     if (isLocalMode) {
@@ -281,6 +284,7 @@ export const userService = {
         ...(avatarChanged ? { avatarDriveId: data.avatarDriveId } : {}),
       },
     })
+    invalidateCache("user:", "article:", "notif:")
     if (avatarChanged) await deleteFromCloudinary(user.avatarDriveId)
   },
 
@@ -309,9 +313,11 @@ export const userService = {
   async setRole(id: string, role: User["role"]) {
     if (isLocalMode) {
       localDb.updateUser(id, { role })
+      invalidateCache("user:")
       return
     }
     await prisma.user.update({ where: { id }, data: { role } })
+    invalidateCache("user:")
   },
 
   async toggleVerified(id: string) {
@@ -319,6 +325,7 @@ export const userService = {
       const u = localDb.getUserById(id)
       if (!u) throw new ServiceError("Pengguna tidak ditemukan.")
       localDb.updateUser(id, { isVerified: !u.isVerified })
+      invalidateCache("user:", "article:")
       return !u.isVerified
     }
     const u = await prisma.user.findUnique({ where: { id }, select: { isVerified: true } })
@@ -327,6 +334,7 @@ export const userService = {
       where: { id },
       data: { isVerified: !u.isVerified },
     })
+    invalidateCache("user:", "article:")
     return updated.isVerified
   },
 
@@ -334,17 +342,20 @@ export const userService = {
     const score = Math.max(0, trustScore)
     if (isLocalMode) {
       localDb.updateUser(id, { trustScore: score, isVerified: score >= 50 })
+      invalidateCache("user:", "article:")
       return
     }
     await prisma.user.update({
       where: { id },
       data: { trustScore: score, isVerified: score >= 50 },
     })
+    invalidateCache("user:", "article:")
   },
 
   async deleteUser(id: string) {
     if (isLocalMode) {
       localDb.deleteUser(id)
+      invalidateCache("user:", "article:", "notif:")
       return
     }
     const target = await prisma.user.findUnique({
@@ -352,6 +363,7 @@ export const userService = {
       select: { avatarDriveId: true, articles: { select: { thumbnailDriveId: true } } },
     })
     await prisma.user.delete({ where: { id } })
+    invalidateCache("user:", "article:", "notif:")
     if (target?.avatarDriveId) await deleteFromCloudinary(target.avatarDriveId)
     if (target?.articles) {
       for (const a of target.articles) {

@@ -7,7 +7,7 @@ import { cache } from "react"
 
 import { isLocalMode } from "@/lib/env"
 import { localDb } from "@/lib/local-db"
-import { prisma } from "@/lib/prisma"
+import { prisma, withCache } from "@/lib/prisma"
 import { toUsername, withSuffix } from "@/lib/slug"
 import { createClient } from "@/lib/supabase/server"
 
@@ -19,8 +19,9 @@ async function uniqueUsername(base: string): Promise<string> {
 
 // Maps the Supabase Auth session to the Prisma User row (created on first sight).
 export const getCurrentUser = cache(async (): Promise<User | null> => {
+  const cookieStore = await cookies()
+
   if (isLocalMode) {
-    const cookieStore = await cookies()
     const localId = cookieStore.get("local_user_id")?.value
     if (localId === "guest") return null
     if (localId) {
@@ -30,31 +31,37 @@ export const getCurrentUser = cache(async (): Promise<User | null> => {
     return localDb.getUserById("user-admin-1")
   }
 
+  const hasAuthCookie = cookieStore.getAll().some((c) => c.name.startsWith("sb-"))
+  if (!hasAuthCookie) return null
+
   const supabase = await createClient()
   const {
-    data: { user: authUser },
-  } = await supabase.auth.getUser()
+    data: { session },
+  } = await supabase.auth.getSession()
+  const authUser = session?.user
   if (!authUser?.email) return null
 
-  const existing = await prisma.user.findUnique({ where: { id: authUser.id } })
-  if (existing) return existing
+  return withCache(`user:id:${authUser.id}`, 60_000, async () => {
+    const existing = await prisma.user.findUnique({ where: { id: authUser.id } })
+    if (existing) return existing
 
-  const meta = authUser.user_metadata as { full_name?: string; name?: string }
-  const fullName = meta.full_name ?? meta.name ?? authUser.email.split("@")[0]
+    const meta = authUser.user_metadata as { full_name?: string; name?: string }
+    const fullName = meta.full_name ?? meta.name ?? authUser.email!.split("@")[0]
 
-  try {
-    return await prisma.user.create({
-      data: {
-        id: authUser.id,
-        email: authUser.email,
-        fullName,
-        username: await uniqueUsername(authUser.email.split("@")[0]),
-      },
-    })
-  } catch {
-    // Concurrent first requests: another one created the row already.
-    return prisma.user.findUnique({ where: { id: authUser.id } })
-  }
+    try {
+      return await prisma.user.create({
+        data: {
+          id: authUser.id,
+          email: authUser.email!,
+          fullName,
+          username: await uniqueUsername(authUser.email!.split("@")[0]),
+        },
+      })
+    } catch {
+      // Concurrent first requests: another one created the row already.
+      return prisma.user.findUnique({ where: { id: authUser.id } })
+    }
+  })
 })
 
 export async function requireUser(): Promise<User> {

@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import Link from "next/link"
 import { notFound } from "next/navigation"
 import { after } from "next/server"
+import { Suspense } from "react"
 
 import { EditorialReader } from "@/components/news/editorial-reader"
 import { BackButton } from "@/components/news/back-button"
@@ -92,11 +93,13 @@ export default async function ArticlePage({ params }: Props) {
             counts={article._count}
             state={state}
           />
-          <DiscussionTabs
-            articleId={article.id}
-            slug={article.slug}
-            viewer={user ? { id: user.id, isStaff } : null}
-          />
+          <Suspense fallback={<div className="mt-8 h-32 animate-pulse rounded-2xl bg-muted/40" />}>
+            <DiscussionTabs
+              articleId={article.id}
+              slug={article.slug}
+              viewer={user ? { id: user.id, isStaff } : null}
+            />
+          </Suspense>
         </>
       )}
     </div>
