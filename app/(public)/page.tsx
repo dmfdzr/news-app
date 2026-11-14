@@ -13,8 +13,6 @@ import { FlameIcon } from "lucide-react"
 
 export const dynamic = "force-dynamic"
 
-const DEFAULT_TAGS = ["iklim", "lingkungan", "energi", "nasional", "teknologi", "ekonomi"]
-
 export default async function Page() {
   const [{ main, middle, right, more }, user] = await Promise.all([
     articleService.getHome(),
@@ -38,39 +36,40 @@ export default async function Page() {
 
   const tagCounts = new Map<string, number>()
   for (const a of [main, middle, ...right, ...more]) {
-    if (!a?.tags) continue
-    for (const t of a.tags) {
+    for (const t of a?.tags ?? []) {
       const clean = t.trim().toLowerCase()
       if (clean) tagCounts.set(clean, (tagCounts.get(clean) ?? 0) + 1)
     }
   }
-  const dynamicTags = [...tagCounts.entries()]
+  const trendingTags = [...tagCounts.entries()]
     .sort((a, b) => b[1] - a[1])
     .map(([t]) => t)
-  const trendingTags = Array.from(new Set([...dynamicTags, ...DEFAULT_TAGS])).slice(0, 8)
+    .slice(0, 8)
 
   return (
     <div className="flex min-w-0 flex-col gap-6 sm:gap-10">
       <ReadingProgress />
 
       {/* TRENDING TAGS BAR */}
-      <nav
-        aria-label="Topik populer"
-        className="flex w-full max-w-full items-center gap-2 overflow-x-auto rounded-2xl border border-slate-200/80 bg-slate-50/80 px-3.5 py-2.5 text-xs dark:border-white/10 dark:bg-muted/40"
-      >
-        <span className="inline-flex shrink-0 items-center gap-1 font-bold tracking-wider text-emerald-700 uppercase dark:text-emerald-400">
-          <FlameIcon className="size-3.5" /> Topik Hangat:
-        </span>
-        {trendingTags.map((tag) => (
-          <Link
-            key={tag}
-            href={`/cari?q=${encodeURIComponent(tag)}`}
-            className="shrink-0 rounded-full bg-background px-3 py-1 font-medium text-slate-700 shadow-2xs ring-1 ring-slate-200/80 transition-colors hover:bg-emerald-600 hover:text-white dark:bg-card dark:text-slate-300 dark:ring-white/10 dark:hover:bg-emerald-600"
-          >
-            #{tag}
-          </Link>
-        ))}
-      </nav>
+      {trendingTags.length > 0 && (
+        <nav
+          aria-label="Topik populer"
+          className="flex w-full max-w-full items-center gap-2 overflow-x-auto rounded-2xl border border-slate-200/80 bg-slate-50/80 px-3.5 py-2.5 text-xs dark:border-white/10 dark:bg-muted/40"
+        >
+          <span className="inline-flex shrink-0 items-center gap-1 font-bold tracking-wider text-emerald-700 uppercase dark:text-emerald-400">
+            <FlameIcon className="size-3.5" /> Topik Hangat:
+          </span>
+          {trendingTags.map((tag) => (
+            <Link
+              key={tag}
+              href={`/cari?q=${encodeURIComponent(tag)}`}
+              className="shrink-0 rounded-full bg-background px-3 py-1 font-medium text-slate-700 shadow-2xs ring-1 ring-slate-200/80 transition-colors hover:bg-emerald-600 hover:text-white dark:bg-card dark:text-slate-300 dark:ring-white/10 dark:hover:bg-emerald-600"
+            >
+              #{tag}
+            </Link>
+          ))}
+        </nav>
+      )}
 
       <HeroBentoGrid main={main} middle={middle} right={right} />
 
