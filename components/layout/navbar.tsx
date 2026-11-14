@@ -78,11 +78,11 @@ export async function Navbar() {
   // TAMPILAN NAVBAR UNTUK ROLE USER & GUEST (PORTAL BERITA)
   return (
     <header className="sticky top-0 z-50 w-full border-b border-slate-200 bg-slate-100/90 backdrop-blur dark:border-white/10 dark:bg-background/90">
-      <div className="mx-auto flex h-14 max-w-[1600px] items-center gap-2 px-3.5 sm:h-16 sm:gap-4 sm:px-6 lg:gap-8 lg:px-10 xl:px-12">
-        <Link href="/" className="font-heading flex shrink-0 items-center gap-2 text-lg font-extrabold tracking-tight sm:text-xl">
+      <div className="mx-auto flex h-14 max-w-[1600px] items-center justify-between gap-1.5 px-3 sm:h-16 sm:gap-4 sm:px-6 lg:gap-8 lg:px-10 xl:px-12">
+        <Link href="/" className="font-heading flex min-w-0 shrink-0 items-center gap-1.5 text-base font-extrabold tracking-tight sm:gap-2 sm:text-xl">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo.png" alt="Logo" className="size-7 object-contain sm:size-8" />
-          <span>
+          <img src="/logo.png" alt="Logo" className="size-6 shrink-0 object-contain sm:size-8" />
+          <span className="truncate">
             Climate<span className="text-emerald-600">Stories</span>
           </span>
         </Link>
@@ -100,7 +100,7 @@ export async function Navbar() {
         </nav>
 
         <div className="ml-auto flex shrink-0 items-center gap-1 sm:gap-2">
-          <Link href="/cari" aria-label="Cari berita" className={cn(buttonVariants({ variant: "ghost", size: "icon" }))}>
+          <Link href="/cari" aria-label="Cari berita" className={cn(buttonVariants({ variant: "ghost", size: "icon-sm" }), "sm:size-9")}>
             <SearchIcon />
           </Link>
           <ThemeToggle />
@@ -111,7 +111,7 @@ export async function Navbar() {
                 <PenLineIcon /> Tulis Berita
               </Link>
               <DropdownMenu>
-                <DropdownMenuTrigger render={<Button variant="ghost" size="icon" aria-label="Menu akun" />}>
+                <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" className="sm:size-9" aria-label="Menu akun" />}>
                   <UserAvatar user={user} />
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="min-w-56">
@@ -137,16 +137,16 @@ export async function Navbar() {
               <AuthDialog
                 initialMode="masuk"
                 label="Masuk"
-                variant="ghost"
-                size="sm"
-                className="px-2.5 text-xs sm:px-3 sm:text-sm"
+                variant="default"
+                size="xs"
+                className="px-3 text-xs sm:h-8 sm:px-3.5 sm:text-sm"
               />
               <AuthDialog
                 initialMode="daftar"
                 label="Daftar"
-                variant="default"
-                size="sm"
-                className="px-2.5 text-xs sm:px-3 sm:text-sm"
+                variant="outline"
+                size="xs"
+                className="hidden sm:inline-flex sm:h-8 sm:px-3.5 sm:text-sm"
               />
             </>
           )}
@@ -182,7 +182,7 @@ export async function Footer() {
             </span>
           </Link>
           <p className="max-w-md text-xs leading-relaxed text-slate-600 sm:text-sm dark:text-slate-400">
-            Platform berita sosial dan jurnalisme warga independen. Mengangkat kabar iklim, lingkungan, dan isu publik dengan verifikasi fakta komunitas (*Community Notes*).
+            Platform berita sosial dan jurnalisme warga independen. Mengangkat kabar iklim, lingkungan, dan isu publik dengan verifikasi fakta komunitas (Community Notes).
           </p>
         </div>
 

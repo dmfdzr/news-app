@@ -288,7 +288,7 @@ export const userService = {
         ...(avatarChanged ? { avatarDriveId: data.avatarDriveId } : {}),
       },
     })
-    invalidateCache("user:", "article:", "notif:")
+    invalidateCache("auth:", "user:", "article:", "notif:")
     if (avatarChanged) await deleteFromCloudinary(user.avatarDriveId)
   },
 
@@ -323,7 +323,7 @@ export const userService = {
       return
     }
     await prisma.user.update({ where: { id }, data: { role } })
-    invalidateCache("user:")
+    invalidateCache("auth:", "user:")
   },
 
   async toggleVerified(id: string) {
@@ -331,7 +331,7 @@ export const userService = {
       const u = localDb.getUserById(id)
       if (!u) throw new ServiceError("Pengguna tidak ditemukan.")
       localDb.updateUser(id, { isVerified: !u.isVerified })
-      invalidateCache("user:", "article:")
+      invalidateCache("auth:", "user:", "article:")
       return !u.isVerified
     }
     const u = await prisma.user.findUnique({ where: { id }, select: { isVerified: true } })
@@ -340,7 +340,7 @@ export const userService = {
       where: { id },
       data: { isVerified: !u.isVerified },
     })
-    invalidateCache("user:", "article:")
+    invalidateCache("auth:", "user:", "article:")
     return updated.isVerified
   },
 
@@ -348,20 +348,20 @@ export const userService = {
     const score = Math.max(0, trustScore)
     if (isLocalMode) {
       localDb.updateUser(id, { trustScore: score, isVerified: score >= 50 })
-      invalidateCache("user:", "article:")
+      invalidateCache("auth:", "user:", "article:")
       return
     }
     await prisma.user.update({
       where: { id },
       data: { trustScore: score, isVerified: score >= 50 },
     })
-    invalidateCache("user:", "article:")
+    invalidateCache("auth:", "user:", "article:")
   },
 
   async deleteUser(id: string) {
     if (isLocalMode) {
       localDb.deleteUser(id)
-      invalidateCache("user:", "article:", "notif:")
+      invalidateCache("auth:", "user:", "article:", "notif:")
       return
     }
     const target = await prisma.user.findUnique({
@@ -369,7 +369,7 @@ export const userService = {
       select: { avatarDriveId: true, articles: { select: { thumbnailDriveId: true } } },
     })
     await prisma.user.delete({ where: { id } })
-    invalidateCache("user:", "article:", "notif:")
+    invalidateCache("auth:", "user:", "article:", "notif:")
     if (target?.avatarDriveId) await deleteFromCloudinary(target.avatarDriveId)
     if (target?.articles) {
       for (const a of target.articles) {

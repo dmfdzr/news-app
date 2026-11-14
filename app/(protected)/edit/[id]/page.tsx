@@ -17,7 +17,7 @@ export default async function EditPage({ params }: { params: Promise<{ id: strin
 
   return (
     <div>
-      <h1 className="font-heading mx-auto mb-6 max-w-3xl text-3xl font-extrabold tracking-tight">Edit Berita</h1>
+      <h1 className="font-heading mx-auto mb-6 max-w-5xl text-2xl font-extrabold tracking-tight sm:text-3xl">Edit Berita</h1>
       <NewsEditorForm
         categories={categories}
         articleId={article.id}

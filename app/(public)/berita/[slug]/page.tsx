@@ -2,7 +2,6 @@ import type { Metadata } from "next"
 import Link from "next/link"
 import { notFound } from "next/navigation"
 import { after } from "next/server"
-import { Suspense } from "react"
 
 import { ArticleGrid } from "@/components/news/article-card"
 import { EditorialReader } from "@/components/news/editorial-reader"
@@ -100,13 +99,11 @@ export default async function ArticlePage({ params }: Props) {
             counts={article._count}
             state={state}
           />
-          <Suspense fallback={<div className="mt-8 h-32 animate-pulse rounded-2xl bg-muted/40" />}>
-            <DiscussionTabs
-              articleId={article.id}
-              slug={article.slug}
-              viewer={user ? { id: user.id, isStaff } : null}
-            />
-          </Suspense>
+          <DiscussionTabs
+            articleId={article.id}
+            slug={article.slug}
+            viewer={user ? { id: user.id, isStaff } : null}
+          />
           {related.length > 0 && (
             <section aria-labelledby="related-heading" className="mt-8 border-t pt-8">
               <h2 id="related-heading" className="font-heading mb-6 text-xl font-extrabold tracking-tight sm:text-2xl">

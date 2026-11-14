@@ -18,7 +18,7 @@ export default async function WritePage() {
   const categories = await categoryService.list()
   return (
     <div>
-      <h1 className="font-heading mx-auto mb-6 max-w-3xl text-3xl font-extrabold tracking-tight">Tulis Berita</h1>
+      <h1 className="font-heading mx-auto mb-6 max-w-5xl text-2xl font-extrabold tracking-tight sm:text-3xl">Tulis Berita</h1>
       <NewsEditorForm categories={categories} />
     </div>
   )

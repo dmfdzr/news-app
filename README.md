@@ -10,7 +10,9 @@
 - **Styling & UI:** Tailwind CSS v4, shadcn/ui primitives, Lucide Icons, TipTap Rich Text Editor
 - **Database & ORM:** Supabase PostgreSQL + Prisma ORM 6
 - **Autentikasi:** Supabase Auth (Email & Password)
-- **Penyimpanan Media:** Cloudinary CDN + Sharp WebP compression + Edge Caching Proxy (`/api/media/[fileId]`)
+- **Penyimpanan Media:** Cloudinary CDN + Sharp WebP compression + Edge Caching Proxy (`/api/media/[...fileId]`)
+- **SEO & Discovery:** Next.js Metadata, Dynamic Sitemap (`/sitemap.xml`), Robots (`/robots.txt`), Web App Manifest (`/manifest.webmanifest`)
+- **Automated CI:** GitHub Actions workflow linting, typechecking, testing, & build verification
 
 ---
 
@@ -19,10 +21,14 @@
 1. **Hero Bento Grid & Navigasi Kategori:**
    - Layout 3 kolom: 1 Headline utama besar (kiri), 1 sub-headline menengah (tengah), dan 3 berita ringkas (kanan).
    - Filter instan per kategori di navbar (`Nasional`, `Teknologi`, `Ekonomi`, `Olahraga`, `Opini`).
+   - Bar **Topik Hangat** (`#tag`) di bagian atas beranda untuk penjelajahan topik berita terpopuler secara instan.
 
 2. **Editorial Reader View:**
    - Tampilan baca split: Gambar besar sticky kiri berdampingan dengan lead berita dan **3 Poin Inti Berita (TL;DR Key Takeaways)** di kanan, menyambung teks penuh di bawah.
-   - Dilengkapi tombol navigasi kembali (*Back Button*).
+   - Dilengkapi estimasi waktu baca (`~X menit baca`), jumlah tayangan (*views*), dan tombol kembali (*Back Button*).
+   - **Reading Progress Bar** di bagian atas layar dan tombol *floating* kembali ke atas saat halaman digulir.
+   - Menu **Bagikan** (Salin Tautan, WhatsApp, X / Twitter) untuk mempermudah distribusi berita.
+   - Rekomendasi **Berita Terkait** dari kanal kategori yang sama di bagian bawah artikel.
 
 3. **Dual-Mode Repost & Interaksi Sosial:**
    - *Direct Repost*: Bagikan ulang berita ke feed pengikut dengan 1 klik.
@@ -41,25 +47,31 @@
    - **Tampilan Khusus Staf**: Admin dan Moderator memiliki antarmuka dashboard monitoring tersendiri tanpa tampilan portal berita publik.
    - **Sidebar Sticky & Kolapsibel**: Kontrol panel berada di sidebar kiri yang tetap (*sticky*) saat halaman digulir, dapat dibuka-tutup (ikon toggle di bagian bawah sidebar pada desktop & tombol hamburger di navbar pada mobile).
    - **Menu Ringkasan (*Summary*)**: Panel utama metrik cepat (Laporan Warga, Headline Bento, Kategori Kanal, Total Akun/Berita), metrik operasional (Total Tayangan, Interaksi Publik, Catatan Komunitas, Rasio Penyelesaian Moderasi), distribusi alasan laporan & sebaran kanal, serta Top 5 Berita & Top Kontributor.
-   - **Fitur Monitoring**: Antrean Laporan Warga (hoaks/spam), Monitoring Seluruh Berita Publik (views, kanal, tombol hapus konten pelanggaran), Headline Bento Grid, dan Kategori Kanal.
+   - **Fitur Monitoring & Pratinjau**: Antrean Laporan Warga (hoaks/spam), Monitoring Seluruh Berita Publik (views, kanal, dialog pratinjau berita lengkap, tombol hapus konten pelanggaran), Headline Bento Grid, dan Kategori Kanal.
+   - **Pencarian & Filter Instan**: Filter dan search real-time pada tab Laporan, Berita, Headline, dan Pengguna.
    - **Manajemen Pengguna (Admin Master)**: Kontrol seluruh akun user (ganti peran `USER` ↔ `MODERATOR` ↔ `ADMIN`, atur trust score, toggle verified contributor, dan hapus user).
 
 7. **Pemisahan Peran & Navbar Minimalis:**
    - **Admin & Moderator**: Navbar hanya menampilkan logo/nama aplikasi, switch tema, dan icon profil akun staf. Tidak ada menu portal berita atau tombol tulis berita.
    - **User (Jurnalis Warga)**: Menikmati portal berita publik lengkap, pencarian, notifikasi, dan tombol `+ Tulis Berita`.
+   - **Guest**: Akses membaca penuh, eksplorasi kategori, dan modal dialog Masuk/Daftar instan tanpa harus berpindah halaman.
 
-8. **Manajemen Akun Mandiri (`/pengaturan` via Edit Profil):**
+8. **Editorial Footer Responsif:**
+   - Informasi platform, tautan cepat seluruh kanal kategori, dan navigasi pencarian di bagian bawah halaman (khusus User & Guest).
+
+9. **Manajemen Akun Mandiri (`/pengaturan` via Edit Profil):**
    - Akses via tombol "Edit profil" di halaman profil saya (`/@username`).
    - Tab **Profil**: Ubah foto avatar, nama lengkap, username unik, dan bio.
    - Tab **Email Akun**: Perbarui alamat email login akun.
    - Tab **Kata Sandi**: Ganti kata sandi akun login.
 
-9. **Pusat Notifikasi (`/notifikasi`):**
+10. **Pusat Notifikasi (`/notifikasi`):**
    - Ikon lonceng navbar dengan badge angka jumlah interaksi baru (khusus akun user).
    - Tab filter notifikasi (Suka, Repost, Komentar, Catatan Komunitas, Pengikut Baru).
 
-10. **Custom Dropdown & Search:**
-   - Seluruh komponen seleksi menggunakan custom dropdown modern dengan sudut membulat (*rounded-2xl*), glassmorphism, dan fitur pencarian real-time terintegrasi.
+11. **Custom Dialog & Modal Actions:**
+   - Seluruh tindakan penting (Hapus Akun, Verifikasi User, Ubah Role, Hapus Berita, Hapus Komentar, Hapus Catatan Komunitas, Tindakan Laporan) menggunakan dialog konfirmasi modern terstandarisasi.
+   - Modal Masuk / Daftar terintegrasi langsung di navbar dan tombol interaksi.
 
 ---
 

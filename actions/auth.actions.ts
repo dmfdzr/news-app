@@ -8,6 +8,7 @@ import { getCurrentUser } from "@/lib/auth"
 import { isLocalMode } from "@/lib/env"
 import type { ActionState } from "@/lib/errors"
 import { localDb } from "@/lib/local-db"
+import { invalidateCache } from "@/lib/prisma"
 import { toUsername } from "@/lib/slug"
 import { createClient } from "@/lib/supabase/server"
 
@@ -47,9 +48,10 @@ export async function signInAction(_: ActionState, formData: FormData): Promise<
     return { error: "Email atau kata sandi salah." }
   }
 
+  invalidateCache("auth:", "user:")
   const supabase = await createClient()
-  const { error } = await supabase.auth.signInWithPassword(parsed.data)
-  if (error) return { error: "Email atau kata sandi salah." }
+  const { data, error } = await supabase.auth.signInWithPassword(parsed.data)
+  if (error || !data.user) return { error: "Email atau kata sandi salah." }
 
   const user = await getCurrentUser()
   if (user?.role === "ADMIN" || user?.role === "MODERATOR") {
@@ -101,6 +103,7 @@ export async function signUpAction(_: ActionState, formData: FormData): Promise<
 }
 
 export async function signOutAction() {
+  invalidateCache("auth:", "user:")
   if (isLocalMode) {
     const c = await cookies()
     c.set("local_user_id", "guest", { path: "/" })

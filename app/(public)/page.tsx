@@ -1,11 +1,10 @@
-import { Suspense } from "react"
 import Link from "next/link"
+import { redirect } from "next/navigation"
 
 import { ArticleGrid } from "@/components/news/article-card"
 import { ReadingProgress } from "@/components/news/back-button"
 import { EditorialReader } from "@/components/news/editorial-reader"
 import { HeroBentoGrid } from "@/components/news/hero-bento-grid"
-import { HomeSkeleton } from "@/components/news/home-skeleton"
 import { ActionBar } from "@/components/social/action-bar"
 import { getCurrentUser } from "@/lib/auth"
 import { articleService } from "@/services/article.service"
@@ -16,11 +15,15 @@ export const dynamic = "force-dynamic"
 
 const DEFAULT_TAGS = ["iklim", "lingkungan", "energi", "nasional", "teknologi", "ekonomi"]
 
-async function Home() {
+export default async function Page() {
   const [{ main, middle, right, more }, user] = await Promise.all([
     articleService.getHome(),
     getCurrentUser(),
   ])
+
+  if (user?.role === "ADMIN" || user?.role === "MODERATOR") {
+    redirect("/admin")
+  }
 
   const [featured, state] = await Promise.all([
     main ? articleService.getBySlug(main.slug) : Promise.resolve(null),
@@ -31,7 +34,7 @@ async function Home() {
 
   const empty = !main && !middle && right.length === 0
   const isAuthor = user && featured ? user.id === featured.authorId : false
-  const isStaff = user ? user.role === "ADMIN" || user.role === "MODERATOR" : false
+  const isStaff = false
 
   const tagCounts = new Map<string, number>()
   for (const a of [main, middle, ...right, ...more]) {
@@ -47,13 +50,13 @@ async function Home() {
   const trendingTags = Array.from(new Set([...dynamicTags, ...DEFAULT_TAGS])).slice(0, 8)
 
   return (
-    <div className="flex flex-col gap-6 sm:gap-10">
+    <div className="flex min-w-0 flex-col gap-6 sm:gap-10">
       <ReadingProgress />
 
       {/* TRENDING TAGS BAR */}
       <nav
         aria-label="Topik populer"
-        className="flex items-center gap-2 overflow-x-auto rounded-2xl border border-slate-200/80 bg-slate-50/80 px-3.5 py-2.5 text-xs dark:border-white/10 dark:bg-muted/40"
+        className="flex w-full max-w-full items-center gap-2 overflow-x-auto rounded-2xl border border-slate-200/80 bg-slate-50/80 px-3.5 py-2.5 text-xs dark:border-white/10 dark:bg-muted/40"
       >
         <span className="inline-flex shrink-0 items-center gap-1 font-bold tracking-wider text-emerald-700 uppercase dark:text-emerald-400">
           <FlameIcon className="size-3.5" /> Topik Hangat:
@@ -109,13 +112,5 @@ async function Home() {
         />
       </section>
     </div>
-  )
-}
-
-export default function Page() {
-  return (
-    <Suspense fallback={<HomeSkeleton />}>
-      <Home />
-    </Suspense>
   )
 }

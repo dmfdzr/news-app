@@ -33,12 +33,22 @@ import {
   UserVerifiedToggle,
   AdminDeleteArticleButton,
 } from "@/components/admin/admin-controls"
+import { DriveImage } from "@/components/news/drive-image"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Select } from "@/components/ui/select"
 import { formatDateTime } from "@/lib/format"
+import { sanitizeHtml } from "@/lib/sanitize"
 import { cn } from "@/lib/utils"
 import type { User as UserModel } from "@prisma/client"
 
@@ -48,6 +58,10 @@ type AdminDashboardProps = {
     id: string
     title: string
     slug: string
+    excerpt?: string | null
+    content?: string
+    sourceUrl?: string | null
+    thumbnailDriveId?: string
     headlinePosition: string
     viewCount?: number
     publishedAt: Date | null
@@ -148,6 +162,7 @@ export function AdminDashboardLayout({ staff, articles, categories, users, repor
   const [articleCategoryFilter, setArticleCategoryFilter] = useState("ALL")
   const [userQuery, setUserQuery] = useState("")
   const [userRoleFilter, setUserRoleFilter] = useState<"ALL" | "USER" | "MODERATOR" | "ADMIN">("ALL")
+  const [previewArticle, setPreviewArticle] = useState<AdminDashboardProps["articles"][number] | null>(null)
 
   const filteredReports = reports.filter((r) => {
     if (reportStatusFilter !== "ALL" && r.status !== reportStatusFilter) return false
@@ -747,9 +762,16 @@ export function AdminDashboardLayout({ staff, articles, categories, users, repor
                         </td>
                         <td className="py-3 pr-4 text-xs">
                           {r.article && (
-                            <span className="font-medium text-foreground">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const found = articles.find((a) => a.id === r.article?.id)
+                                if (found) setPreviewArticle(found)
+                              }}
+                              className="cursor-pointer text-left font-medium text-blue-600 hover:underline dark:text-blue-400"
+                            >
                               [Berita] {r.article.title}
-                            </span>
+                            </button>
                           )}
                           {r.comment && (
                             <p className="italic text-slate-600 dark:text-slate-400">
@@ -800,7 +822,7 @@ export function AdminDashboardLayout({ staff, articles, categories, users, repor
                 <div>
                   <CardTitle>Monitoring Berita Publik</CardTitle>
                   <CardDescription>
-                    Awasi seluruh tulisan jurnalis warga, jumlah tayangan (*views*), tanggal publikasi, dan hapus jika menyalahi aturan.
+                    Awasi seluruh tulisan jurnalis warga, jumlah tayangan (views), tanggal publikasi, dan hapus jika menyalahi aturan.
                   </CardDescription>
                 </div>
                 <Badge variant="outline">{filteredArticles.length} Berita Terbit</Badge>
@@ -844,7 +866,13 @@ export function AdminDashboardLayout({ staff, articles, categories, users, repor
                     {filteredArticles.map((a) => (
                       <tr key={a.id} className="border-b transition-colors hover:bg-muted/40">
                         <td className="py-2.5 pr-4">
-                          <span className="font-medium text-foreground">{a.title}</span>
+                          <button
+                            type="button"
+                            onClick={() => setPreviewArticle(a)}
+                            className="cursor-pointer text-left font-medium text-foreground hover:text-blue-600 hover:underline"
+                          >
+                            {a.title}
+                          </button>
                         </td>
                         <td className="py-2.5 pr-4 text-xs font-medium">
                           {a.author.fullName} (@{a.author.username})
@@ -859,7 +887,17 @@ export function AdminDashboardLayout({ staff, articles, categories, users, repor
                           {a.publishedAt ? formatDateTime(a.publishedAt) : "-"}
                         </td>
                         <td className="py-2.5">
-                          <AdminDeleteArticleButton articleId={a.id} title={a.title} />
+                          <div className="flex items-center gap-1.5">
+                            <Button
+                              type="button"
+                              size="xs"
+                              variant="outline"
+                              onClick={() => setPreviewArticle(a)}
+                            >
+                              Tinjau
+                            </Button>
+                            <AdminDeleteArticleButton articleId={a.id} title={a.title} />
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -956,7 +994,7 @@ export function AdminDashboardLayout({ staff, articles, categories, users, repor
                 <div>
                   <CardTitle>Manajemen Pengguna (Super Admin)</CardTitle>
                   <CardDescription>
-                    Atur hak akses peran (`USER` ↔ `MODERATOR` ↔ `ADMIN`), status Verified Contributor, dan skor reputasi.
+                    Atur hak akses peran (USER ↔ MODERATOR ↔ ADMIN), status Verified Contributor, dan skor reputasi.
                   </CardDescription>
                 </div>
                 <Badge variant="outline">{filteredUsers.length} Akun Terdaftar</Badge>
@@ -1047,6 +1085,63 @@ export function AdminDashboardLayout({ staff, articles, categories, users, repor
             </CardContent>
           </Card>
         )}
+
+        {/* DIALOG PRATINJAU BERITA UNTUK ADMIN & MODERATOR */}
+        <Dialog open={previewArticle !== null} onOpenChange={(open) => !open && setPreviewArticle(null)}>
+          <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl">
+            {previewArticle && (
+              <>
+                <DialogHeader>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Badge variant="secondary">{previewArticle.category.name}</Badge>
+                    <span className="text-xs text-muted-foreground">
+                      Oleh {previewArticle.author.fullName} (@{previewArticle.author.username})
+                    </span>
+                  </div>
+                  <DialogTitle className="text-lg font-extrabold sm:text-xl">
+                    {previewArticle.title}
+                  </DialogTitle>
+                  <DialogDescription>
+                    {previewArticle.publishedAt ? formatDateTime(previewArticle.publishedAt) : "Draft"} ·{" "}
+                    {previewArticle.viewCount ?? 0} tayangan
+                  </DialogDescription>
+                </DialogHeader>
+
+                <div className="flex flex-col gap-4 py-2 text-sm">
+                  {previewArticle.thumbnailDriveId && (
+                    <DriveImage
+                      driveId={previewArticle.thumbnailDriveId}
+                      alt={previewArticle.title}
+                      className="aspect-[16/10] w-full rounded-2xl"
+                    />
+                  )}
+                  {previewArticle.excerpt && (
+                    <p className="font-medium text-slate-700 dark:text-slate-300">
+                      {previewArticle.excerpt}
+                    </p>
+                  )}
+                  {previewArticle.content && (
+                    <div
+                      className="prose prose-sm dark:prose-invert max-w-none border-t pt-3"
+                      dangerouslySetInnerHTML={{ __html: sanitizeHtml(previewArticle.content) }}
+                    />
+                  )}
+                  {previewArticle.sourceUrl && (
+                    <p className="rounded-xl bg-muted p-2.5 text-xs break-all">
+                      <strong>Sumber Rujukan:</strong> {previewArticle.sourceUrl}
+                    </p>
+                  )}
+                </div>
+
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setPreviewArticle(null)}>
+                    Tutup Pratinjau
+                  </Button>
+                </DialogFooter>
+              </>
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   )
