@@ -19,6 +19,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { LoadingOverlay } from "@/components/ui/skeleton"
 import { Textarea } from "@/components/ui/textarea"
 import { Repeat2Icon } from "lucide-react"
 
@@ -57,6 +58,7 @@ export function RepostMenu({ articleId, slug, isAuthor, reposted, quoteText, cou
 
   return (
     <>
+      <LoadingOverlay open={pending} message="Memproses repost..." />
       <DropdownMenu>
         <DropdownMenuTrigger
           render={

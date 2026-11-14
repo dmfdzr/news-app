@@ -1,9 +1,14 @@
 import assert from "node:assert/strict"
 import { test } from "node:test"
 
-import { initials, stripHtml } from "./format.ts"
+import { initials, readingTimeMinutes, stripHtml } from "./format.ts"
 import { mediaUrl } from "./media.ts"
 import { sanitizeHtml } from "./sanitize.ts"
+
+test("readingTimeMinutes", () => {
+  assert.equal(readingTimeMinutes("<p>Pendek</p>"), 1)
+  assert.equal(readingTimeMinutes(`<p>${"kata ".repeat(410)}</p>`), 3)
+})
 
 test("mediaUrl", () => {
   assert.equal(

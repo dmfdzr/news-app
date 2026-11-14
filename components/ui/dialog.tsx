@@ -5,6 +5,7 @@ import { Dialog as DialogPrimitive } from "@base-ui/react/dialog"
 import { cn } from "cn"
 
 import { Button } from "@/components/ui/button"
+import { LoadingOverlay } from "@/components/ui/skeleton"
 import { XIcon } from "lucide-react"
 
 function Dialog({ ...props }: DialogPrimitive.Root.Props) {
@@ -168,30 +169,33 @@ function ConfirmDialog({
   onConfirm: () => void
 }) {
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
-          <DialogDescription>{description}</DialogDescription>
-        </DialogHeader>
-        <DialogFooter>
-          <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={pending}>
-            {cancelLabel}
-          </Button>
-          <Button
-            type="button"
-            variant={variant}
-            disabled={pending}
-            onClick={() => {
-              onConfirm()
-              onOpenChange(false)
-            }}
-          >
-            {pending ? "Memproses..." : confirmLabel}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+    <>
+      <LoadingOverlay open={pending} message="Memproses tindakan..." />
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{title}</DialogTitle>
+            <DialogDescription>{description}</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={pending}>
+              {cancelLabel}
+            </Button>
+            <Button
+              type="button"
+              variant={variant}
+              disabled={pending}
+              onClick={() => {
+                onConfirm()
+                onOpenChange(false)
+              }}
+            >
+              {pending ? "Memproses..." : confirmLabel}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   )
 }
 

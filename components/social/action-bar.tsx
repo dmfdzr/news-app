@@ -8,8 +8,64 @@ import { AuthDialog } from "@/components/auth/auth-form"
 import { ReportDialog } from "@/components/social/report-dialog"
 import { RepostMenu } from "@/components/social/repost-modal"
 import { Button } from "@/components/ui/button"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { cn } from "@/lib/utils"
-import { BookmarkIcon, HeartIcon, MessageCircleIcon } from "lucide-react"
+import { BookmarkIcon, CheckIcon, HeartIcon, LinkIcon, MessageCircleIcon, Share2Icon } from "lucide-react"
+
+function ShareMenu({ slug }: { slug: string }) {
+  function getArticleUrl() {
+    if (typeof window === "undefined") return `/berita/${slug}`
+    return `${window.location.origin}/berita/${slug}`
+  }
+
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(getArticleUrl())
+      toast.success("Tautan berita berhasil disalin!")
+    } catch {
+      toast.error("Gagal menyalin tautan.")
+    }
+  }
+
+  function shareWhatsApp() {
+    const url = encodeURIComponent(getArticleUrl())
+    window.open(`https://wa.me/?text=${url}`, "_blank", "noopener,noreferrer")
+  }
+
+  function shareX() {
+    const url = encodeURIComponent(getArticleUrl())
+    window.open(`https://twitter.com/intent/tweet?url=${url}`, "_blank", "noopener,noreferrer")
+  }
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        render={
+          <Button variant="outline" size="sm" aria-label="Bagikan berita">
+            <Share2Icon className="size-3.5" />
+            <span className="hidden sm:inline">Bagikan</span>
+          </Button>
+        }
+      />
+      <DropdownMenuContent align="end" className="min-w-48">
+        <DropdownMenuItem onClick={copyLink}>
+          <LinkIcon className="size-3.5" /> Salin tautan berita
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={shareWhatsApp}>
+          <CheckIcon className="size-3.5 text-emerald-600" /> Bagikan ke WhatsApp
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={shareX}>
+          <Share2Icon className="size-3.5 text-sky-500" /> Bagikan ke X / Twitter
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
+}
 
 type Props = {
   articleId: string
@@ -46,13 +102,16 @@ export function ActionBar({ articleId, slug, isAuthor, signedIn, counts, state }
           <span>{counts.reposts} repost</span>
           <span>{counts.comments} komentar</span>
         </div>
-        <AuthDialog
-          initialMode="masuk"
-          next={`/berita/${slug}`}
-          label="Masuk untuk berinteraksi"
-          variant="outline"
-          size="xs"
-        />
+        <div className="flex items-center gap-2">
+          <ShareMenu slug={slug} />
+          <AuthDialog
+            initialMode="masuk"
+            next={`/berita/${slug}`}
+            label="Masuk untuk berinteraksi"
+            variant="outline"
+            size="xs"
+          />
+        </div>
       </div>
     )
   }
@@ -79,6 +138,7 @@ export function ActionBar({ articleId, slug, isAuthor, signedIn, counts, state }
       <a href="#komentar" className="inline-flex h-8 items-center gap-1.5 rounded-4xl border px-3 text-sm font-medium hover:bg-accent">
         <MessageCircleIcon className="size-4" /> {counts.comments}
       </a>
+      <ShareMenu slug={slug} />
       <ReportDialog articleId={articleId} />
       <Button
         variant={optimistic.bookmarked ? "default" : "outline"}

@@ -160,35 +160,11 @@ export const notificationService = {
       return notifs.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
     }
 
-    return withCache(`notif:${userId}`, 30_000, async () => {
-      // Prisma mode: aggregate recent social events for this user
-      const [reposts, likes, comments, follows, notes] = await Promise.all([
-        prisma.repost.findMany({
-          where: { article: { authorId: userId }, userId: { not: userId } },
-          orderBy: { createdAt: "desc" },
-          take: 20,
-          include: {
-            user: { select: { username: true, fullName: true, avatarDriveId: true, isVerified: true } },
-            article: { select: { id: true, title: true, slug: true } },
-          },
-        }),
-        prisma.like.findMany({
-          where: { article: { authorId: userId }, userId: { not: userId } },
-          orderBy: { createdAt: "desc" },
-          take: 20,
-          include: {
-            user: { select: { username: true, fullName: true, avatarDriveId: true, isVerified: true } },
-            article: { select: { id: true, title: true, slug: true } },
-          },
-        }),
-        prisma.comment.findMany({
-          where: { article: { authorId: userId }, userId: { not: userId } },
-          orderBy: { createdAt: "desc" },
-          take: 20,
-          include: {
-            user: { select: { username: true, fullName: true, avatarDriveId: true, isVerified: true } },
-            article: { select: { id: true, title: true, slug: true } },
-          },
+    return withCache(`notif:${userId}`, 60_000, async () => {
+      const [myArticles, follows] = await Promise.all([
+        prisma.article.findMany({
+          where: { authorId: userId },
+          select: { id: true },
         }),
         prisma.follow.findMany({
           where: { followingId: userId },
@@ -198,16 +174,51 @@ export const notificationService = {
             follower: { select: { username: true, fullName: true, avatarDriveId: true, isVerified: true } },
           },
         }),
-        prisma.communityNote.findMany({
-          where: { article: { authorId: userId }, userId: { not: userId } },
-          orderBy: { createdAt: "desc" },
-          take: 20,
-          include: {
-            user: { select: { username: true, fullName: true, avatarDriveId: true, isVerified: true } },
-            article: { select: { id: true, title: true, slug: true } },
-          },
-        }),
       ])
+
+      const articleIds = myArticles.map((a) => a.id)
+
+      const [reposts, likes, comments, notes] =
+        articleIds.length > 0
+          ? await Promise.all([
+              prisma.repost.findMany({
+                where: { articleId: { in: articleIds }, userId: { not: userId } },
+                orderBy: { createdAt: "desc" },
+                take: 20,
+                include: {
+                  user: { select: { username: true, fullName: true, avatarDriveId: true, isVerified: true } },
+                  article: { select: { id: true, title: true, slug: true } },
+                },
+              }),
+              prisma.like.findMany({
+                where: { articleId: { in: articleIds }, userId: { not: userId } },
+                orderBy: { createdAt: "desc" },
+                take: 20,
+                include: {
+                  user: { select: { username: true, fullName: true, avatarDriveId: true, isVerified: true } },
+                  article: { select: { id: true, title: true, slug: true } },
+                },
+              }),
+              prisma.comment.findMany({
+                where: { articleId: { in: articleIds }, userId: { not: userId } },
+                orderBy: { createdAt: "desc" },
+                take: 20,
+                include: {
+                  user: { select: { username: true, fullName: true, avatarDriveId: true, isVerified: true } },
+                  article: { select: { id: true, title: true, slug: true } },
+                },
+              }),
+              prisma.communityNote.findMany({
+                where: { articleId: { in: articleIds }, userId: { not: userId } },
+                orderBy: { createdAt: "desc" },
+                take: 20,
+                include: {
+                  user: { select: { username: true, fullName: true, avatarDriveId: true, isVerified: true } },
+                  article: { select: { id: true, title: true, slug: true } },
+                },
+              }),
+            ])
+          : [[], [], [], []]
 
       const notifs: AppNotification[] = [
         ...reposts.map((r) => ({

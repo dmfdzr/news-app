@@ -11,6 +11,7 @@ import { ConfirmDialog } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select } from "@/components/ui/select"
+import { LoadingOverlay } from "@/components/ui/skeleton"
 import { Textarea } from "@/components/ui/textarea"
 import type { ArticleInput } from "@/services/article.service"
 
@@ -99,6 +100,7 @@ export function NewsEditorForm({
         submit("PUBLISHED")
       }}
     >
+      <LoadingOverlay open={pending} message="Menyimpan & memproses berita..." />
       <div className="flex flex-col gap-2">
         <Label htmlFor="title">Judul</Label>
         <Input id="title" required maxLength={255} value={values.title} onChange={(e) => set("title", e.target.value)} />

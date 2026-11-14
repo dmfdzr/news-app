@@ -4,10 +4,10 @@ import { DriveImage } from "@/components/news/drive-image"
 import { UserAvatar, UserLink } from "@/components/news/user-bits"
 import { CommunityNoteSection } from "@/components/social/community-note-section"
 import { Badge } from "@/components/ui/badge"
-import { formatDate } from "@/lib/format"
+import { formatDate, readingTimeMinutes } from "@/lib/format"
 import { sanitizeHtml } from "@/lib/sanitize"
 import type { articleService } from "@/services/article.service"
-import { ExternalLinkIcon, ShieldCheckIcon } from "lucide-react"
+import { ClockIcon, ExternalLinkIcon, EyeIcon, ShieldCheckIcon } from "lucide-react"
 
 type Article = NonNullable<Awaited<ReturnType<typeof articleService.getBySlug>>>
 
@@ -50,11 +50,23 @@ export function EditorialReader({
           {article.status === "DRAFT" && <Badge variant="destructive">Draft</Badge>}
         </div>
         <h1 className="font-heading text-2xl leading-tight font-extrabold tracking-tight sm:text-3xl lg:text-4xl">{article.title}</h1>
-        <div className="flex items-center gap-3 text-sm text-slate-600 dark:text-slate-400">
-          <UserAvatar user={article.author} />
-          <div className="flex min-w-0 flex-col">
-            <UserLink user={article.author} />
-            {article.publishedAt && <time dateTime={article.publishedAt.toISOString()}>{formatDate(article.publishedAt)}</time>}
+        <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-slate-600 dark:text-slate-400">
+          <div className="flex items-center gap-3">
+            <UserAvatar user={article.author} />
+            <div className="flex min-w-0 flex-col">
+              <UserLink user={article.author} />
+              {article.publishedAt && <time dateTime={article.publishedAt.toISOString()}>{formatDate(article.publishedAt)}</time>}
+            </div>
+          </div>
+          <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
+            <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 dark:bg-muted">
+              <ClockIcon className="size-3.5 text-emerald-600" />
+              ~{readingTimeMinutes(article.content)} menit baca
+            </span>
+            <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 dark:bg-muted">
+              <EyeIcon className="size-3.5 text-blue-600" />
+              {(article.viewCount ?? 0).toLocaleString("id-ID")} tayangan
+            </span>
           </div>
         </div>
       </header>

@@ -19,12 +19,15 @@ import { Button } from "@/components/ui/button"
 import { ConfirmDialog } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Select } from "@/components/ui/select"
+import { LoadingOverlay } from "@/components/ui/skeleton"
 import { BadgeCheckIcon, Trash2Icon } from "lucide-react"
 
 export function HeadlineSelect({ articleId, value }: { articleId: string; value: string }) {
   const [pending, startTransition] = useTransition()
   return (
-    <Select
+    <>
+      <LoadingOverlay open={pending} message="Memperbarui posisi headline..." />
+      <Select
       aria-label="Posisi headline"
       defaultValue={value}
       disabled={pending}
@@ -42,6 +45,7 @@ export function HeadlineSelect({ articleId, value }: { articleId: string; value:
       <option value="MIDDLE_CENTER">Tengah</option>
       <option value="RIGHT_LIST">Daftar kanan</option>
     </Select>
+    </>
   )
 }
 
@@ -102,6 +106,7 @@ export function CategoryForm({ category }: { category?: { id: string; name: stri
 
   return (
     <>
+      <LoadingOverlay open={pending} message="Menyimpan kategori kanal..." />
       <form action={action} className="grid grid-cols-1 gap-2 sm:grid-cols-12 sm:items-center">
         {category && <input type="hidden" name="id" value={category.id} />}
         <Input name="name" required placeholder="Nama kategori" aria-label="Nama kategori" defaultValue={category?.name} className="w-full sm:col-span-3" />

@@ -4,8 +4,9 @@ import { notFound } from "next/navigation"
 import { after } from "next/server"
 import { Suspense } from "react"
 
+import { ArticleGrid } from "@/components/news/article-card"
 import { EditorialReader } from "@/components/news/editorial-reader"
-import { BackButton } from "@/components/news/back-button"
+import { BackButton, ReadingProgress } from "@/components/news/back-button"
 import { ActionBar } from "@/components/social/action-bar"
 import { DiscussionTabs } from "@/components/social/discussion-tabs"
 import { buttonVariants } from "@/components/ui/button"
@@ -54,12 +55,18 @@ export default async function ArticlePage({ params }: Props) {
 
   if (article.status === "PUBLISHED") after(() => articleService.incrementViews(article.id).catch(() => {}))
 
-  const state = user
-    ? await socialService.getViewerState(user.id, article.id)
-    : { liked: false, bookmarked: false, reposted: false, quoteText: null }
+  const [state, relatedResult] = await Promise.all([
+    user
+      ? socialService.getViewerState(user.id, article.id)
+      : Promise.resolve({ liked: false, bookmarked: false, reposted: false, quoteText: null }),
+    articleService.listPublished({ categorySlug: article.category.slug, page: 1 }),
+  ])
+
+  const related = relatedResult.items.filter((a) => a.id !== article.id).slice(0, 4)
 
   return (
     <div className="flex w-full flex-col gap-6">
+      <ReadingProgress />
       <div className="flex items-center justify-between">
         <BackButton />
         {(isAuthor || user?.role === "ADMIN") && (
@@ -100,6 +107,14 @@ export default async function ArticlePage({ params }: Props) {
               viewer={user ? { id: user.id, isStaff } : null}
             />
           </Suspense>
+          {related.length > 0 && (
+            <section aria-labelledby="related-heading" className="mt-8 border-t pt-8">
+              <h2 id="related-heading" className="font-heading mb-6 text-xl font-extrabold tracking-tight sm:text-2xl">
+                Berita Terkait di Kanal {article.category.name}
+              </h2>
+              <ArticleGrid articles={related} />
+            </section>
+          )}
         </>
       )}
     </div>

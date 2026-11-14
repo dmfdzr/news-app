@@ -4,8 +4,8 @@ import { NextResponse, type NextRequest } from "next/server"
 import sharp from "sharp"
 
 import { getCurrentUser } from "@/lib/auth"
-import { isCloudinaryConfigured, uploadToCloudinary } from "@/lib/cloudinary"
-import { MAX_UPLOAD_BYTES } from "@/lib/media"
+import { deleteFromCloudinary, isCloudinaryConfigured, uploadToCloudinary } from "@/lib/cloudinary"
+import { DRIVE_ID_PATTERN, MAX_UPLOAD_BYTES } from "@/lib/media"
 
 export const runtime = "nodejs"
 
@@ -38,6 +38,11 @@ export async function POST(request: NextRequest) {
       .toBuffer()
 
     if (isCloudinaryConfigured()) {
+      const replaceFileId = String(form?.get("replaceFileId") ?? "")
+      const userSuffix = `_${user.id.slice(0, 8)}`
+      if (replaceFileId && DRIVE_ID_PATTERN.test(replaceFileId) && replaceFileId.endsWith(userSuffix)) {
+        await deleteFromCloudinary(replaceFileId)
+      }
       const publicId = `cs_${kind}_${Date.now()}_${user.id.slice(0, 8)}`
       const uploaded = await uploadToCloudinary(webp, publicId)
       return NextResponse.json({ fileId: uploaded.fileId, url: uploaded.url })

@@ -6,7 +6,7 @@ import { z } from "zod"
 import { isLocalMode } from "@/lib/env"
 import { localDb } from "@/lib/local-db"
 import { ServiceError } from "@/lib/errors"
-import { invalidateCache, prisma } from "@/lib/prisma"
+import { invalidateCache, prisma, withCache } from "@/lib/prisma"
 
 const VERIFIED_THRESHOLD = 50
 const POINTS = { like: 1, repost: 3 }
@@ -314,19 +314,21 @@ export const socialService = {
       return buildTree(flat)
     }
 
-    const flat = await prisma.comment.findMany({
-      where: { articleId },
-      orderBy: { createdAt: "asc" },
-      select: {
-        id: true,
-        content: true,
-        isEdited: true,
-        createdAt: true,
-        parentId: true,
-        user: { select: { id: true, username: true, fullName: true, avatarDriveId: true, isVerified: true } },
-      },
+    return withCache(`social:comments:${articleId}`, 45_000, async () => {
+      const flat = await prisma.comment.findMany({
+        where: { articleId },
+        orderBy: { createdAt: "asc" },
+        select: {
+          id: true,
+          content: true,
+          isEdited: true,
+          createdAt: true,
+          parentId: true,
+          user: { select: { id: true, username: true, fullName: true, avatarDriveId: true, isVerified: true } },
+        },
+      })
+      return buildTree(flat)
     })
-    return buildTree(flat)
   },
 
   getReposts(articleId: string) {
@@ -348,17 +350,19 @@ export const socialService = {
       return Promise.resolve(list)
     }
 
-    return prisma.repost.findMany({
-      where: { articleId },
-      orderBy: { createdAt: "desc" },
-      take: 50,
-      select: {
-        id: true,
-        quoteText: true,
-        createdAt: true,
-        user: { select: { username: true, fullName: true, avatarDriveId: true, isVerified: true } },
-      },
-    })
+    return withCache(`social:reposts:${articleId}`, 45_000, () =>
+      prisma.repost.findMany({
+        where: { articleId },
+        orderBy: { createdAt: "desc" },
+        take: 50,
+        select: {
+          id: true,
+          quoteText: true,
+          createdAt: true,
+          user: { select: { username: true, fullName: true, avatarDriveId: true, isVerified: true } },
+        },
+      })
+    )
   },
 
   async getViewerState(userId: string, articleId: string) {
@@ -369,13 +373,15 @@ export const socialService = {
       return { liked: !!like, bookmarked: !!bookmark, reposted: !!repost, quoteText: repost?.quoteText ?? null }
     }
 
-    const key = { userId_articleId: { userId, articleId } }
-    const [like, bookmark, repost] = await Promise.all([
-      prisma.like.findUnique({ where: key, select: { id: true } }),
-      prisma.bookmark.findUnique({ where: key, select: { id: true } }),
-      prisma.repost.findUnique({ where: key, select: { quoteText: true } }),
-    ])
-    return { liked: !!like, bookmarked: !!bookmark, reposted: !!repost, quoteText: repost?.quoteText ?? null }
+    return withCache(`social:viewer:${userId}:${articleId}`, 45_000, async () => {
+      const key = { userId_articleId: { userId, articleId } }
+      const [like, bookmark, repost] = await Promise.all([
+        prisma.like.findUnique({ where: key, select: { id: true } }),
+        prisma.bookmark.findUnique({ where: key, select: { id: true } }),
+        prisma.repost.findUnique({ where: key, select: { quoteText: true } }),
+      ])
+      return { liked: !!like, bookmarked: !!bookmark, reposted: !!repost, quoteText: repost?.quoteText ?? null }
+    })
   },
 
   async isFollowing(userId: string, targetId: string) {
@@ -383,11 +389,13 @@ export const socialService = {
       return Promise.resolve(!!localDb.getFollow(userId, targetId))
     }
 
-    const row = await prisma.follow.findUnique({
-      where: { followerId_followingId: { followerId: userId, followingId: targetId } },
-      select: { followerId: true },
+    return withCache(`social:follow:${userId}:${targetId}`, 45_000, async () => {
+      const row = await prisma.follow.findUnique({
+        where: { followerId_followingId: { followerId: userId, followingId: targetId } },
+        select: { followerId: true },
+      })
+      return !!row
     })
-    return !!row
   },
 
   async addCommunityNote(user: User, articleId: string, content: string, sourceUrl?: string) {
@@ -499,22 +507,26 @@ export const socialService = {
       })
     }
 
-    return prisma.report.findMany({
-      where: status ? { status } : undefined,
-      orderBy: { createdAt: "desc" },
-      include: {
-        user: { select: { username: true, fullName: true } },
-        article: { select: { id: true, title: true, slug: true } },
-        comment: { select: { id: true, content: true } },
-      },
-    })
+    return withCache(`social:reports:${status ?? "ALL"}`, 45_000, () =>
+      prisma.report.findMany({
+        where: status ? { status } : undefined,
+        orderBy: { createdAt: "desc" },
+        include: {
+          user: { select: { username: true, fullName: true } },
+          article: { select: { id: true, title: true, slug: true } },
+          comment: { select: { id: true, content: true } },
+        },
+      })
+    )
   },
 
   async updateReportStatus(reportId: string, status: ReportStatus) {
     if (isLocalMode) {
       localDb.updateReportStatus(reportId, status)
+      invalidateCache("social:")
       return
     }
     await prisma.report.update({ where: { id: reportId }, data: { status } })
+    invalidateCache("social:")
   },
 }

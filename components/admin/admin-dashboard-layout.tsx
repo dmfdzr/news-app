@@ -36,6 +36,8 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Select } from "@/components/ui/select"
 import { formatDateTime } from "@/lib/format"
 import { cn } from "@/lib/utils"
 import type { User as UserModel } from "@prisma/client"
@@ -140,6 +142,48 @@ export function AdminDashboardLayout({ staff, articles, categories, users, repor
 
   const [activeTab, setActiveTab] = useState<TabKey>("ringkasan")
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const [reportQuery, setReportQuery] = useState("")
+  const [reportStatusFilter, setReportStatusFilter] = useState<"ALL" | "PENDING" | "RESOLVED" | "DISMISSED">("ALL")
+  const [articleQuery, setArticleQuery] = useState("")
+  const [articleCategoryFilter, setArticleCategoryFilter] = useState("ALL")
+  const [userQuery, setUserQuery] = useState("")
+  const [userRoleFilter, setUserRoleFilter] = useState<"ALL" | "USER" | "MODERATOR" | "ADMIN">("ALL")
+
+  const filteredReports = reports.filter((r) => {
+    if (reportStatusFilter !== "ALL" && r.status !== reportStatusFilter) return false
+    if (!reportQuery.trim()) return true
+    const q = reportQuery.toLowerCase()
+    return (
+      r.user.username.toLowerCase().includes(q) ||
+      r.reason.toLowerCase().includes(q) ||
+      (r.details && r.details.toLowerCase().includes(q)) ||
+      (r.article && r.article.title.toLowerCase().includes(q)) ||
+      (r.comment && r.comment.content.toLowerCase().includes(q))
+    )
+  })
+
+  const filteredArticles = articles.filter((a) => {
+    if (articleCategoryFilter !== "ALL" && a.category.name !== articleCategoryFilter) return false
+    if (!articleQuery.trim()) return true
+    const q = articleQuery.toLowerCase()
+    return (
+      a.title.toLowerCase().includes(q) ||
+      a.author.fullName.toLowerCase().includes(q) ||
+      a.author.username.toLowerCase().includes(q)
+    )
+  })
+
+  const filteredUsers = users.filter((u) => {
+    if (userRoleFilter !== "ALL" && u.role !== userRoleFilter) return false
+    if (!userQuery.trim()) return true
+    const q = userQuery.toLowerCase()
+    return (
+      u.fullName.toLowerCase().includes(q) ||
+      u.username.toLowerCase().includes(q) ||
+      u.email.toLowerCase().includes(q)
+    )
+  })
+
   const sidebarContext = useAdminSidebar()
   const isMobileDrawerOpen = sidebarContext ? sidebarContext.mobileOpen : false
   const closeMobileDrawer = () => sidebarContext?.setMobileOpen(false)
@@ -653,7 +697,27 @@ export function AdminDashboardLayout({ staff, articles, categories, users, repor
                 </Badge>
               </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="flex flex-col gap-4">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                <Input
+                  placeholder="Cari pelapor, judul berita, atau isi laporan..."
+                  value={reportQuery}
+                  onChange={(e) => setReportQuery(e.target.value)}
+                  className="sm:max-w-xs"
+                />
+                <Select
+                  aria-label="Filter status laporan"
+                  value={reportStatusFilter}
+                  searchable={false}
+                  wrapperClassName="w-full sm:w-44"
+                  onChange={(e) => setReportStatusFilter(e.target.value as typeof reportStatusFilter)}
+                >
+                  <option value="ALL">Semua Status</option>
+                  <option value="PENDING">PENDING</option>
+                  <option value="RESOLVED">RESOLVED</option>
+                  <option value="DISMISSED">DISMISSED</option>
+                </Select>
+              </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
@@ -667,7 +731,7 @@ export function AdminDashboardLayout({ staff, articles, categories, users, repor
                     </tr>
                   </thead>
                   <tbody>
-                    {reports.map((r) => (
+                    {filteredReports.map((r) => (
                       <tr key={r.id} className="border-b transition-colors hover:bg-muted/40">
                         <td className="py-3 pr-4 text-xs whitespace-nowrap text-slate-500">
                           {formatDateTime(r.createdAt)}
@@ -715,10 +779,10 @@ export function AdminDashboardLayout({ staff, articles, categories, users, repor
                         </td>
                       </tr>
                     ))}
-                    {reports.length === 0 && (
+                    {filteredReports.length === 0 && (
                       <tr>
                         <td colSpan={6} className="py-8 text-center text-sm text-slate-500">
-                          Tidak ada laporan yang perlu ditindaklanjuti.
+                          Tidak ada laporan yang cocok.
                         </td>
                       </tr>
                     )}
@@ -739,10 +803,31 @@ export function AdminDashboardLayout({ staff, articles, categories, users, repor
                     Awasi seluruh tulisan jurnalis warga, jumlah tayangan (*views*), tanggal publikasi, dan hapus jika menyalahi aturan.
                   </CardDescription>
                 </div>
-                <Badge variant="outline">{articles.length} Berita Terbit</Badge>
+                <Badge variant="outline">{filteredArticles.length} Berita Terbit</Badge>
               </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="flex flex-col gap-4">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                <Input
+                  placeholder="Cari judul atau penulis berita..."
+                  value={articleQuery}
+                  onChange={(e) => setArticleQuery(e.target.value)}
+                  className="sm:max-w-xs"
+                />
+                <Select
+                  aria-label="Filter kanal berita"
+                  value={articleCategoryFilter}
+                  wrapperClassName="w-full sm:w-48"
+                  onChange={(e) => setArticleCategoryFilter(e.target.value)}
+                >
+                  <option value="ALL">Semua Kanal</option>
+                  {categories.map((c) => (
+                    <option key={c.id} value={c.name}>
+                      {c.name}
+                    </option>
+                  ))}
+                </Select>
+              </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
@@ -756,7 +841,7 @@ export function AdminDashboardLayout({ staff, articles, categories, users, repor
                     </tr>
                   </thead>
                   <tbody>
-                    {articles.map((a) => (
+                    {filteredArticles.map((a) => (
                       <tr key={a.id} className="border-b transition-colors hover:bg-muted/40">
                         <td className="py-2.5 pr-4">
                           <span className="font-medium text-foreground">{a.title}</span>
@@ -778,10 +863,10 @@ export function AdminDashboardLayout({ staff, articles, categories, users, repor
                         </td>
                       </tr>
                     ))}
-                    {articles.length === 0 && (
+                    {filteredArticles.length === 0 && (
                       <tr>
                         <td colSpan={6} className="py-8 text-center text-sm text-slate-500">
-                          Belum ada berita terbit dalam aplikasi.
+                          Tidak ada berita yang cocok.
                         </td>
                       </tr>
                     )}
@@ -800,7 +885,13 @@ export function AdminDashboardLayout({ staff, articles, categories, users, repor
                 Tentukan posisi tayang artikel pada Hero Bento Grid: 1 Utama Besar (Kiri), 1 Menengah (Tengah), dan 3 Ringkas (Daftar Kanan).
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="flex flex-col gap-4">
+              <Input
+                placeholder="Cari judul artikel untuk dijadikan headline..."
+                value={articleQuery}
+                onChange={(e) => setArticleQuery(e.target.value)}
+                className="sm:max-w-xs"
+              />
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
@@ -810,7 +901,7 @@ export function AdminDashboardLayout({ staff, articles, categories, users, repor
                     </tr>
                   </thead>
                   <tbody>
-                    {articles.map((a) => (
+                    {filteredArticles.map((a) => (
                       <tr key={a.id} className="border-b transition-colors hover:bg-muted/40">
                         <td className="py-2.5 pr-4">
                           <span className="font-medium text-foreground">{a.title}</span>
@@ -820,10 +911,10 @@ export function AdminDashboardLayout({ staff, articles, categories, users, repor
                         </td>
                       </tr>
                     ))}
-                    {articles.length === 0 && (
+                    {filteredArticles.length === 0 && (
                       <tr>
                         <td colSpan={2} className="py-8 text-center text-sm text-slate-500">
-                          Belum ada berita terbit untuk dijadikan headline.
+                          Tidak ada berita yang cocok.
                         </td>
                       </tr>
                     )}
@@ -868,10 +959,30 @@ export function AdminDashboardLayout({ staff, articles, categories, users, repor
                     Atur hak akses peran (`USER` ↔ `MODERATOR` ↔ `ADMIN`), status Verified Contributor, dan skor reputasi.
                   </CardDescription>
                 </div>
-                <Badge variant="outline">{users.length} Akun Terdaftar</Badge>
+                <Badge variant="outline">{filteredUsers.length} Akun Terdaftar</Badge>
               </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="flex flex-col gap-4">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                <Input
+                  placeholder="Cari nama, username, atau email pengguna..."
+                  value={userQuery}
+                  onChange={(e) => setUserQuery(e.target.value)}
+                  className="sm:max-w-xs"
+                />
+                <Select
+                  aria-label="Filter peran pengguna"
+                  value={userRoleFilter}
+                  searchable={false}
+                  wrapperClassName="w-full sm:w-44"
+                  onChange={(e) => setUserRoleFilter(e.target.value as typeof userRoleFilter)}
+                >
+                  <option value="ALL">Semua Peran</option>
+                  <option value="USER">USER</option>
+                  <option value="MODERATOR">MODERATOR</option>
+                  <option value="ADMIN">ADMIN</option>
+                </Select>
+              </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
@@ -885,7 +996,7 @@ export function AdminDashboardLayout({ staff, articles, categories, users, repor
                     </tr>
                   </thead>
                   <tbody>
-                    {users.map((u) => {
+                    {filteredUsers.map((u) => {
                       const isCurrentAdmin = u.id === staff.id
                       return (
                         <tr key={u.id} className="border-b transition-colors hover:bg-muted/40">
@@ -923,6 +1034,13 @@ export function AdminDashboardLayout({ staff, articles, categories, users, repor
                         </tr>
                       )
                     })}
+                    {filteredUsers.length === 0 && (
+                      <tr>
+                        <td colSpan={6} className="py-8 text-center text-sm text-slate-500">
+                          Tidak ada pengguna yang cocok.
+                        </td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
               </div>

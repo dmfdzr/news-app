@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { LoadingOverlay } from "@/components/ui/skeleton"
 
 function AuthFormFields({
   mode,
@@ -30,6 +31,10 @@ function AuthFormFields({
 
   return (
     <div className="flex flex-col gap-5">
+      <LoadingOverlay
+        open={pending}
+        message={isLogin ? "Memverifikasi kredensial akun..." : "Mendaftarkan akun baru..."}
+      />
       <form action={formAction} className="flex flex-col gap-4">
         <input type="hidden" name="next" value={next} />
         {!isLogin && (

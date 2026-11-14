@@ -117,11 +117,13 @@ export const userService = {
       return Promise.resolve(result)
     }
 
-    return prisma.repost.findMany({
-      where: { userId, article: { status: "PUBLISHED" } },
-      orderBy: { createdAt: "desc" },
-      select: { id: true, quoteText: true, createdAt: true, article: { select: cardSelect } },
-    })
+    return withCache(`user:reposts:${userId}`, 45_000, () =>
+      prisma.repost.findMany({
+        where: { userId, article: { status: "PUBLISHED" } },
+        orderBy: { createdAt: "desc" },
+        select: { id: true, quoteText: true, createdAt: true, article: { select: cardSelect } },
+      })
+    )
   },
 
   listComments(userId: string) {
@@ -142,17 +144,19 @@ export const userService = {
       return Promise.resolve(userComments)
     }
 
-    return prisma.comment.findMany({
-      where: { userId, article: { status: "PUBLISHED" } },
-      orderBy: { createdAt: "desc" },
-      take: 50,
-      select: {
-        id: true,
-        content: true,
-        createdAt: true,
-        article: { select: { title: true, slug: true } },
-      },
-    })
+    return withCache(`user:comments:${userId}`, 45_000, () =>
+      prisma.comment.findMany({
+        where: { userId, article: { status: "PUBLISHED" } },
+        orderBy: { createdAt: "desc" },
+        take: 50,
+        select: {
+          id: true,
+          content: true,
+          createdAt: true,
+          article: { select: { title: true, slug: true } },
+        },
+      })
+    )
   },
 
   async getFollowingFeed(userId: string) {
@@ -303,11 +307,13 @@ export const userService = {
       )
     }
 
-    return prisma.user.findMany({
-      orderBy: { createdAt: "desc" },
-      take: 100,
-      select: { id: true, username: true, fullName: true, email: true, role: true, isVerified: true, trustScore: true },
-    })
+    return withCache("user:admin-list", 45_000, () =>
+      prisma.user.findMany({
+        orderBy: { createdAt: "desc" },
+        take: 100,
+        select: { id: true, username: true, fullName: true, email: true, role: true, isVerified: true, trustScore: true },
+      })
+    )
   },
 
   async setRole(id: string, role: User["role"]) {

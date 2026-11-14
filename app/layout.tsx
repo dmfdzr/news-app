@@ -3,7 +3,7 @@ import { Inter, Plus_Jakarta_Sans } from "next/font/google"
 
 import "./globals.css"
 import { AdminSidebarProvider } from "@/components/admin/admin-sidebar-context"
-import { Navbar } from "@/components/layout/navbar"
+import { Footer, Navbar } from "@/components/layout/navbar"
 import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "@/components/ui/sonner"
 import { getSiteUrl } from "@/lib/env"
@@ -41,6 +41,7 @@ export default function RootLayout({
             <main className="mx-auto w-full max-w-[1600px] px-3.5 py-4 sm:px-6 sm:py-6 lg:px-10 xl:px-12 has-[[data-admin-dashboard]]:max-w-none has-[[data-admin-dashboard]]:p-0">
               {children}
             </main>
+            <Footer />
             <Toaster richColors />
           </AdminSidebarProvider>
         </ThemeProvider>

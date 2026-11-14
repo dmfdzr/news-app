@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { LoadingOverlay } from "@/components/ui/skeleton"
 import { Textarea } from "@/components/ui/textarea"
 import { formatDateTime } from "@/lib/format"
 import { ExternalLinkIcon, ShieldAlertIcon, Trash2Icon } from "lucide-react"
@@ -82,6 +83,7 @@ export function CommunityNoteSection({ articleId, slug, notes, viewer }: Props) 
 
   return (
     <div className="flex flex-col gap-4">
+      <LoadingOverlay open={pending} message="Memproses catatan komunitas..." />
       {notes.map((note) => (
         <aside
           key={note.id}

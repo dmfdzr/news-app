@@ -1,5 +1,5 @@
 import { PrismaClient } from "@prisma/client"
-import { cleanEnv } from "@/lib/env"
+import { cleanEnv, isLocalMode } from "@/lib/env"
 
 if (process.env.DATABASE_URL) {
   process.env.DATABASE_URL = cleanEnv(process.env.DATABASE_URL)
@@ -15,11 +15,17 @@ type CacheEntry<T> = { value: T; expiresAt: number }
 
 const globalForPrisma = globalThis as unknown as {
   prisma?: PrismaClient
+  prismaConnected?: boolean
   appCache?: Map<string, CacheEntry<unknown>>
 }
 
 export const prisma = globalForPrisma.prisma ?? new PrismaClient()
 const appCache = globalForPrisma.appCache ?? new Map<string, CacheEntry<unknown>>()
+
+if (!isLocalMode && !globalForPrisma.prismaConnected) {
+  globalForPrisma.prismaConnected = true
+  void prisma.$connect().catch(() => {})
+}
 
 if (process.env.NODE_ENV !== "production") {
   globalForPrisma.prisma = prisma

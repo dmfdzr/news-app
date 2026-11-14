@@ -316,11 +316,13 @@ export const articleService = {
         .filter((a) => a.authorId === authorId && (includeDrafts ? a.status !== "ARCHIVED" : a.status === "PUBLISHED"))
       return Promise.resolve(list.map((a) => ({ ...toArticleCard(a), status: a.status, id: a.id })))
     }
-    return prisma.article.findMany({
-      where: { authorId, ...(includeDrafts ? { status: { not: "ARCHIVED" } } : published) },
-      select: { ...cardSelect, status: true, id: true },
-      orderBy: { createdAt: "desc" },
-    })
+    return withCache(`article:author:${authorId}:${includeDrafts}`, 45_000, () =>
+      prisma.article.findMany({
+        where: { authorId, ...(includeDrafts ? { status: { not: "ARCHIVED" } } : published) },
+        select: { ...cardSelect, status: true, id: true },
+        orderBy: { createdAt: "desc" },
+      })
+    )
   },
 
   listBookmarked(userId: string) {
@@ -335,11 +337,13 @@ export const articleService = {
         .filter((x): x is { article: ArticleCard } => x !== null)
       return Promise.resolve(items)
     }
-    return prisma.bookmark.findMany({
-      where: { userId, article: published },
-      orderBy: { createdAt: "desc" },
-      select: { article: { select: cardSelect } },
-    })
+    return withCache(`article:bookmark:${userId}`, 45_000, () =>
+      prisma.bookmark.findMany({
+        where: { userId, article: published },
+        orderBy: { createdAt: "desc" },
+        select: { article: { select: cardSelect } },
+      })
+    )
   },
 
   incrementViews(id: string) {
@@ -534,21 +538,23 @@ export const articleService = {
         })
       )
     }
-    return prisma.article.findMany({
-      where: published,
-      select: {
-        id: true,
-        title: true,
-        slug: true,
-        headlinePosition: true,
-        viewCount: true,
-        publishedAt: true,
-        author: { select: { fullName: true, username: true } },
-        category: { select: { name: true } },
-        _count: { select: { comments: true, likes: true, reposts: true, communityNotes: true } },
-      },
-      orderBy: { publishedAt: "desc" },
-      take: 100,
-    })
+    return withCache("article:admin-list", 45_000, () =>
+      prisma.article.findMany({
+        where: published,
+        select: {
+          id: true,
+          title: true,
+          slug: true,
+          headlinePosition: true,
+          viewCount: true,
+          publishedAt: true,
+          author: { select: { fullName: true, username: true } },
+          category: { select: { name: true } },
+          _count: { select: { comments: true, likes: true, reposts: true, communityNotes: true } },
+        },
+        orderBy: { publishedAt: "desc" },
+        take: 100,
+      })
+    )
   },
 }

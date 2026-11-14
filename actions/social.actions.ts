@@ -18,7 +18,7 @@ async function run(
   } catch (error) {
     return toActionError(error, fallback)
   }
-  invalidateCache("article:", "user:", "notif:")
+  invalidateCache("article:", "user:", "notif:", "social:")
   if (slug) revalidatePath(`/berita/${slug}`)
   revalidatePath("/")
   return {}

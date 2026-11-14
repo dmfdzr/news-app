@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Select } from "@/components/ui/select"
+import { LoadingOverlay } from "@/components/ui/skeleton"
 import { Textarea } from "@/components/ui/textarea"
 import { FlagIcon } from "lucide-react"
 
@@ -45,7 +46,9 @@ export function ReportDialog({ articleId, commentId, title }: Props) {
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <>
+      <LoadingOverlay open={pending} message="Mengirim laporan ke moderator..." />
+      <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger
         render={
           <Button variant="ghost" size="xs" className="text-slate-500 hover:text-destructive">
@@ -101,5 +104,6 @@ export function ReportDialog({ articleId, commentId, title }: Props) {
         </DialogFooter>
       </DialogContent>
     </Dialog>
+    </>
   )
 }

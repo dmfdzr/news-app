@@ -5,6 +5,7 @@ import { toast } from "sonner"
 
 import { DriveImage } from "@/components/news/drive-image"
 import { Button } from "@/components/ui/button"
+import { LoadingOverlay } from "@/components/ui/skeleton"
 import { MAX_UPLOAD_BYTES } from "@/lib/media"
 
 export function ImageUploader({
@@ -17,6 +18,7 @@ export function ImageUploader({
   kind?: "thumbnail" | "avatar"
 }) {
   const input = useRef<HTMLInputElement>(null)
+  const unsavedUploadRef = useRef<string | null>(null)
   const [uploading, setUploading] = useState(false)
 
   async function upload(file: File) {
@@ -26,9 +28,13 @@ export function ImageUploader({
       const body = new FormData()
       body.set("file", file)
       body.set("kind", kind)
+      if (unsavedUploadRef.current) {
+        body.set("replaceFileId", unsavedUploadRef.current)
+      }
       const res = await fetch("/api/media/upload", { method: "POST", body })
       const json = (await res.json()) as { fileId?: string; error?: string }
       if (!res.ok || !json.fileId) throw new Error(json.error ?? "Gagal mengunggah gambar.")
+      unsavedUploadRef.current = json.fileId
       onChange(json.fileId)
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Gagal mengunggah gambar.")
@@ -40,6 +46,7 @@ export function ImageUploader({
 
   return (
     <div className="flex flex-col gap-2">
+      <LoadingOverlay open={uploading} message="Mengunggah & mengompresi gambar ke WebP..." />
       {value ? (
         <DriveImage
           driveId={value}
