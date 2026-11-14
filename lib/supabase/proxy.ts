@@ -22,8 +22,8 @@ export async function updateSession(request: NextRequest) {
     const localId = request.cookies.get("local_user_id")?.value
     if (localId === "guest" && isProtected) {
       const url = request.nextUrl.clone()
-      url.pathname = "/masuk"
-      url.search = `?next=${encodeURIComponent(pathname)}`
+      url.pathname = "/"
+      url.search = `?auth=masuk&next=${encodeURIComponent(pathname)}`
       return NextResponse.redirect(url)
     }
     return NextResponse.next({ request })
@@ -34,8 +34,8 @@ export async function updateSession(request: NextRequest) {
   const hasAuthCookie = request.cookies.getAll().some((c) => c.name.startsWith("sb-"))
   if (!hasAuthCookie && isProtected) {
     const url = request.nextUrl.clone()
-    url.pathname = "/masuk"
-    url.search = `?next=${encodeURIComponent(pathname)}`
+    url.pathname = "/"
+    url.search = `?auth=masuk&next=${encodeURIComponent(pathname)}`
     return NextResponse.redirect(url)
   }
 

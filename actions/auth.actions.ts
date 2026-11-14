@@ -18,9 +18,15 @@ const credentials = z.object({
   password: z.string().min(8, "Kata sandi minimal 8 karakter."),
 })
 
-const registration = credentials.extend({
-  fullName: z.string().trim().min(2, "Nama minimal 2 karakter.").max(60),
-})
+const registration = credentials
+  .extend({
+    fullName: z.string().trim().min(2, "Nama minimal 2 karakter.").max(60),
+    confirmPassword: z.string().min(8, "Konfirmasi kata sandi minimal 8 karakter."),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Konfirmasi kata sandi tidak cocok.",
+    path: ["confirmPassword"],
+  })
 
 function safeNext(value: FormDataEntryValue | null): string {
   const next = typeof value === "string" ? value : "/"

@@ -139,6 +139,7 @@ export async function Navbar() {
                 label="Masuk"
                 variant="default"
                 size="xs"
+                syncWithUrl
                 className="px-3 text-xs sm:h-8 sm:px-3.5 sm:text-sm"
               />
               <AuthDialog

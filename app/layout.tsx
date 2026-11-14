@@ -34,6 +34,13 @@ export default function RootLayout({
       suppressHydrationWarning
       className={cn("antialiased", inter.variable, jakarta.variable, "font-sans")}
     >
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `!function(){try{var d=document.documentElement,s=localStorage.getItem("theme");if(s==="dark"||(!s&&window.matchMedia("(prefers-color-scheme: dark)").matches)){d.classList.add("dark")}else{d.classList.remove("dark")}}catch(e){}}();`,
+          }}
+        />
+      </head>
       <body className="flex min-h-screen flex-col">
         <ThemeProvider>
           <AdminSidebarProvider>

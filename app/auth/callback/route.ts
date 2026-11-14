@@ -17,5 +17,5 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(`${origin}${next}`)
     }
   }
-  return NextResponse.redirect(`${origin}/masuk?error=callback`)
+  return NextResponse.redirect(`${origin}/?auth=masuk&error=callback`)
 }

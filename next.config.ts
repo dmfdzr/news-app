@@ -30,6 +30,12 @@ const nextConfig: NextConfig = {
       },
     ]
   },
+  async redirects() {
+    return [
+      { source: "/masuk", destination: "/?auth=masuk", permanent: false },
+      { source: "/daftar", destination: "/?auth=daftar", permanent: false },
+    ]
+  },
   // "@" folders are reserved for parallel routes, so /@username maps to /profil/username.
   async rewrites() {
     return [{ source: "/@:username", destination: "/profil/:username" }]

@@ -67,7 +67,7 @@ export const getCurrentUser = cache(async (): Promise<User | null> => {
 
 export async function requireUser(): Promise<User> {
   const user = await getCurrentUser()
-  if (!user) redirect("/masuk")
+  if (!user) redirect("/?auth=masuk")
   return user
 }
 

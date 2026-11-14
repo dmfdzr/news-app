@@ -6,6 +6,6 @@ export const dynamic = "force-dynamic"
 
 export default async function MyProfileRedirectPage() {
   const user = await getCurrentUser()
-  if (!user) redirect("/masuk?next=/profil")
+  if (!user) redirect("/?auth=masuk&next=/profil")
   redirect(`/@${user.username}`)
 }

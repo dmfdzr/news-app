@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label"
 import { LoadingOverlay } from "@/components/ui/skeleton"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
+import { EyeIcon, EyeOffIcon } from "lucide-react"
 
 export function ProfileForm({
   initial,
@@ -23,6 +24,8 @@ export function ProfileForm({
   const [pwdState, pwdAction, pwdPending] = useActionState(updatePasswordAction, undefined)
 
   const [avatar, setAvatar] = useState(initial.avatarDriveId)
+  const [showPwd, setShowPwd] = useState(false)
+  const [showConfirmPwd, setShowConfirmPwd] = useState(false)
 
   useEffect(() => {
     if (profileState?.error) toast.error(profileState.error)
@@ -143,25 +146,53 @@ export function ProfileForm({
             <form action={pwdAction} className="flex flex-col gap-5">
               <div className="flex flex-col gap-2">
                 <Label htmlFor="password">Kata Sandi Baru</Label>
-                <Input
-                  id="password"
-                  name="password"
-                  type="password"
-                  required
-                  minLength={8}
-                  placeholder="Minimal 8 karakter"
-                />
+                <div className="relative">
+                  <Input
+                    id="password"
+                    name="password"
+                    type={showPwd ? "text" : "password"}
+                    required
+                    minLength={8}
+                    placeholder="Minimal 8 karakter"
+                    className="pr-10"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-xs"
+                    tabIndex={-1}
+                    aria-label={showPwd ? "Sembunyikan kata sandi" : "Lihat kata sandi"}
+                    onClick={() => setShowPwd((prev) => !prev)}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  >
+                    {showPwd ? <EyeOffIcon className="size-4" /> : <EyeIcon className="size-4" />}
+                  </Button>
+                </div>
               </div>
               <div className="flex flex-col gap-2">
                 <Label htmlFor="confirmPassword">Konfirmasi Kata Sandi Baru</Label>
-                <Input
-                  id="confirmPassword"
-                  name="confirmPassword"
-                  type="password"
-                  required
-                  minLength={8}
-                  placeholder="Ulangi kata sandi baru"
-                />
+                <div className="relative">
+                  <Input
+                    id="confirmPassword"
+                    name="confirmPassword"
+                    type={showConfirmPwd ? "text" : "password"}
+                    required
+                    minLength={8}
+                    placeholder="Ulangi kata sandi baru"
+                    className="pr-10"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-xs"
+                    tabIndex={-1}
+                    aria-label={showConfirmPwd ? "Sembunyikan konfirmasi kata sandi" : "Lihat konfirmasi kata sandi"}
+                    onClick={() => setShowConfirmPwd((prev) => !prev)}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  >
+                    {showConfirmPwd ? <EyeOffIcon className="size-4" /> : <EyeIcon className="size-4" />}
+                  </Button>
+                </div>
               </div>
               <Button type="submit" disabled={pwdPending} className="w-fit">
                 {pwdPending ? "Mengubah..." : "Ganti Kata Sandi"}
