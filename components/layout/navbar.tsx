@@ -168,68 +168,23 @@ export async function Footer() {
   const user = await getCurrentUser()
   if (user?.role === "ADMIN" || user?.role === "MODERATOR") return null
 
-  const categories = await categoryService.list()
-
   return (
-    <footer className="mt-auto border-t border-slate-200 bg-slate-100/70 dark:border-white/10 dark:bg-muted/30">
-      <div className="mx-auto grid max-w-[1600px] grid-cols-1 gap-8 px-3.5 py-10 sm:grid-cols-2 sm:px-6 lg:grid-cols-12 lg:px-10 xl:px-12">
-        <div className="flex flex-col gap-3 lg:col-span-5">
-          <Link href="/" className="font-heading flex items-center gap-2 text-xl font-extrabold tracking-tight">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/logo.png" alt="Logo" className="size-8 object-contain" />
-            <span>
-              Climate<span className="text-emerald-600">Stories</span>
-            </span>
-          </Link>
-          <p className="max-w-md text-xs leading-relaxed text-slate-600 sm:text-sm dark:text-slate-400">
-            Platform berita sosial dan jurnalisme warga independen. Mengangkat kabar iklim, lingkungan, dan isu publik dengan verifikasi fakta komunitas (Community Notes).
-          </p>
-        </div>
-
-        <div className="flex flex-col gap-2.5 lg:col-span-4">
-          <h3 className="font-heading text-xs font-bold tracking-wider text-foreground uppercase">
-            Kanal Berita
-          </h3>
-          <div className="flex flex-wrap gap-2">
-            {categories.map((c) => (
-              <Link
-                key={c.id}
-                href={`/kategori/${c.slug}`}
-                className="rounded-xl bg-background px-3 py-1.5 text-xs font-medium text-slate-600 ring-1 ring-slate-200/80 transition-colors hover:text-foreground dark:bg-card dark:text-slate-300 dark:ring-white/10"
-              >
-                {c.name}
-              </Link>
-            ))}
-          </div>
-        </div>
-
-        <div className="flex flex-col gap-2.5 lg:col-span-3">
-          <h3 className="font-heading text-xs font-bold tracking-wider text-foreground uppercase">
-            Navigasi Cepat
-          </h3>
-          <ul className="flex flex-col gap-1.5 text-xs text-slate-600 sm:text-sm dark:text-slate-400">
-            <li>
-              <Link href="/" className="hover:text-foreground hover:underline">
-                Beranda Utama
-              </Link>
-            </li>
-            <li>
-              <Link href="/cari" className="hover:text-foreground hover:underline">
-                Pencarian &amp; Topik
-              </Link>
-            </li>
-            {user && (
-              <li>
-                <Link href="/tulis" className="hover:text-foreground hover:underline">
-                  Tulis Laporan Warga
-                </Link>
-              </li>
-            )}
-          </ul>
-        </div>
+    <footer className="mt-auto border-t border-slate-200 bg-slate-100/70 pt-4 dark:border-white/10 dark:bg-muted/30">
+      <div className="mx-auto flex max-w-[1600px] flex-col items-start gap-2 px-3.5 pb-4 sm:flex-row sm:items-center sm:gap-3.5 sm:px-6 lg:px-10 xl:px-12">
+        <Link href="/" className="font-heading flex shrink-0 items-center gap-2 text-lg font-extrabold tracking-tight">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo.png" alt="Logo" className="size-6 object-contain" />
+          <span>
+            Climate<span className="text-emerald-600">Stories</span>
+          </span>
+        </Link>
+        <span className="hidden text-slate-300 sm:inline dark:text-white/20">|</span>
+        <p className="text-xs leading-relaxed text-slate-600 dark:text-slate-400">
+          Platform berita sosial dan jurnalisme warga independen. Mengangkat kabar iklim, lingkungan, dan isu publik dengan verifikasi fakta komunitas (Community Notes).
+        </p>
       </div>
 
-      <div className="border-t border-slate-200/80 py-4 text-center text-xs text-slate-500 dark:border-white/10">
+      <div className="border-t border-slate-200/80 py-3 text-center text-[11px] text-slate-500 sm:text-xs dark:border-white/10">
         © {new Date().getFullYear()} ClimateStories — Citizen Journalism &amp; Anti-Hoax Social News.
       </div>
     </footer>
