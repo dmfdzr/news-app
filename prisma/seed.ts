@@ -1,10 +1,20 @@
 import { PrismaClient } from "@prisma/client"
 import { createClient } from "@supabase/supabase-js"
+import { v2 as cloudinary } from "cloudinary"
 import dotenv from "dotenv"
 
 dotenv.config()
 
 const prisma = new PrismaClient()
+
+if (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET) {
+  cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET,
+    secure: true,
+  })
+}
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL
 const secretKey = process.env.SUPABASE_SECRET_KEY
@@ -47,20 +57,10 @@ const usersToSeed = [
     isVerified: true,
     trustScore: 150,
   },
-  {
-    email: "user@climatestories.id",
-    password: "user1234",
-    username: "jurnalis_warga",
-    fullName: "Citizen Reporter",
-    bio: "Penulis dan kontributor berita jurnalisme warga.",
-    role: "USER" as const,
-    isVerified: false,
-    trustScore: 15,
-  },
 ]
 
 async function main() {
-  console.log("1. Membersihkan database Supabase...")
+  console.log("1. Membersihkan database Supabase & aset Cloudinary...")
   await prisma.report.deleteMany()
   await prisma.communityNote.deleteMany()
   await prisma.comment.deleteMany()
@@ -71,6 +71,18 @@ async function main() {
   await prisma.article.deleteMany()
   await prisma.user.deleteMany()
   await prisma.category.deleteMany()
+
+  if (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY) {
+    try {
+      const cldRes = await cloudinary.api.resources({ type: "upload", prefix: "climatestories/", max_results: 100 })
+      if (cldRes.resources?.length) {
+        await cloudinary.api.delete_resources(cldRes.resources.map((r: { public_id: string }) => r.public_id))
+        console.log(`   Dihapus ${cldRes.resources.length} aset dari Cloudinary climatestories/`)
+      }
+    } catch (e) {
+      console.warn("   Gagal membersihkan Cloudinary (opsional):", e)
+    }
+  }
 
   console.log("2. Membersihkan akun Supabase Auth lama...")
   const { data: authUsers } = await supabaseAdmin.auth.admin.listUsers()

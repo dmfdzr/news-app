@@ -127,13 +127,14 @@ Buka peramban di [http://localhost:3000](http://localhost:3000).
 
 ## Akun Bawaan (Default Accounts)
 
-Setelah menjalankan `npm run db:seed`, akun berikut siap digunakan:
+Setelah menjalankan `npm run db:seed`, akun bawaan staf berikut siap digunakan:
 
 | Role | Email | Password | Username | Keterangan |
 | :--- | :--- | :--- | :--- | :--- |
 | **ADMIN** | `admin@climatestories.id` | `admin123` | `@admin` | Akses penuh manajemen pengguna, moderasi laporan, headline, dan kategori di `/admin`. |
 | **MODERATOR** | `moderator@climatestories.id` | `moderator123` | `@moderator` | Akses panel kurasi headline, kategori, laporan anti-hoaks di `/admin`. |
-| **USER** | `user@climatestories.id` | `user1234` | `@jurnalis_warga` | Pengguna jurnalisme warga (tulis berita, interaksi sosial, bookmark, follow). |
+
+*Catatan: Akun kontributor warga (`USER`) dibuat mandiri oleh pengguna secara langsung melalui tombol "Daftar" pada aplikasi.*
 
 ---
 

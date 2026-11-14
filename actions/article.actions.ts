@@ -6,6 +6,7 @@ import { z } from "zod"
 
 import { requireUser } from "@/lib/auth"
 import { toActionError, type ActionState } from "@/lib/errors"
+import { checkRateLimit } from "@/lib/rate-limit"
 import { articleService, type ArticleInput } from "@/services/article.service"
 
 const payloadSchema = z.object({
@@ -30,6 +31,11 @@ function revalidateNews(slug?: string) {
 
 export async function createArticleAction(payload: ArticleInput): Promise<ActionState> {
   const user = await requireUser()
+  const limit = checkRateLimit(`article-create:${user.id}`, { windowMs: 10 * 60_000, max: 4 })
+  if (!limit.success) {
+    return { error: `Batas penulisan berita tercapai. Silakan tunggu ${limit.resetInSeconds} detik.` }
+  }
+
   const parsed = payloadSchema.safeParse(payload)
   if (!parsed.success) return { error: "Data berita tidak valid." }
 

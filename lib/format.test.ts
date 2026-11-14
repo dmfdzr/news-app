@@ -3,7 +3,15 @@ import { test } from "node:test"
 
 import { initials, readingTimeMinutes, stripHtml } from "./format.ts"
 import { mediaUrl } from "./media.ts"
+import { checkRateLimit } from "./rate-limit.ts"
 import { sanitizeHtml } from "./sanitize.ts"
+
+test("checkRateLimit", () => {
+  const key = "test-limit-" + Date.now()
+  assert.equal(checkRateLimit(key, { windowMs: 1000, max: 2 }).success, true)
+  assert.equal(checkRateLimit(key, { windowMs: 1000, max: 2 }).success, true)
+  assert.equal(checkRateLimit(key, { windowMs: 1000, max: 2 }).success, false)
+})
 
 test("readingTimeMinutes", () => {
   assert.equal(readingTimeMinutes("<p>Pendek</p>"), 1)

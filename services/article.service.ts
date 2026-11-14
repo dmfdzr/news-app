@@ -109,6 +109,9 @@ function parseInput(input: ArticleInput) {
   }
   const parsed = articleSchema.safeParse(cleaned)
   if (!parsed.success) throw new ServiceError(parsed.error.issues[0].message)
+  if (parsed.data.type === "OPINION" && !parsed.data.sourceUrl && parsed.data.status === "PUBLISHED") {
+    throw new ServiceError("Tautan sumber referensi wajib dicantumkan untuk berita bertipe Saduran / Opini.")
+  }
   return { ...parsed.data, content: sanitizeHtml(parsed.data.content) }
 }
 

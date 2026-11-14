@@ -171,7 +171,7 @@ export async function Footer() {
   const categories = await categoryService.list()
 
   return (
-    <footer className="mt-16 border-t border-slate-200 bg-slate-100/70 dark:border-white/10 dark:bg-muted/30">
+    <footer className="mt-auto border-t border-slate-200 bg-slate-100/70 dark:border-white/10 dark:bg-muted/30">
       <div className="mx-auto grid max-w-[1600px] grid-cols-1 gap-8 px-3.5 py-10 sm:grid-cols-2 sm:px-6 lg:grid-cols-12 lg:px-10 xl:px-12">
         <div className="flex flex-col gap-3 lg:col-span-5">
           <Link href="/" className="font-heading flex items-center gap-2 text-xl font-extrabold tracking-tight">

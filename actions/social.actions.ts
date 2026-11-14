@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache"
 import { requireUser } from "@/lib/auth"
 import { toActionError, type ActionState } from "@/lib/errors"
 import { invalidateCache } from "@/lib/prisma"
+import { checkRateLimit } from "@/lib/rate-limit"
 import { socialService } from "@/services/social.service"
 
 async function run(
@@ -13,6 +14,10 @@ async function run(
   slug?: string
 ): Promise<ActionState> {
   const user = await requireUser()
+  const limit = checkRateLimit(`social:${user.id}`, { windowMs: 60_000, max: 30 })
+  if (!limit.success) {
+    return { error: `Terlalu banyak permintaan. Silakan tunggu ${limit.resetInSeconds} detik.` }
+  }
   try {
     await fn(user)
   } catch (error) {
@@ -43,7 +48,11 @@ export async function undoRepostAction(articleId: string, slug: string) {
 }
 
 export async function addCommentAction(articleId: string, slug: string, content: string, parentId?: string) {
-  return run((u) => socialService.addComment(u, articleId, content, parentId), "Tidak dapat mengirim komentar.", slug)
+  return run(async (u) => {
+    const limit = checkRateLimit(`comment:${u.id}`, { windowMs: 60_000, max: 6 })
+    if (!limit.success) throw new Error(`Terlalu cepat berkomentar. Tunggu ${limit.resetInSeconds} detik.`)
+    await socialService.addComment(u, articleId, content, parentId)
+  }, "Tidak dapat mengirim komentar.", slug)
 }
 
 export async function editCommentAction(commentId: string, slug: string, content: string) {
@@ -62,7 +71,11 @@ export async function toggleFollowAction(targetId: string, username: string) {
 }
 
 export async function addCommunityNoteAction(articleId: string, slug: string, content: string, sourceUrl?: string) {
-  return run((u) => socialService.addCommunityNote(u, articleId, content, sourceUrl), "Gagal mengirim catatan komunitas.", slug)
+  return run(async (u) => {
+    const limit = checkRateLimit(`note:${u.id}`, { windowMs: 60_000, max: 3 })
+    if (!limit.success) throw new Error(`Terlalu sering mengirim catatan. Tunggu ${limit.resetInSeconds} detik.`)
+    await socialService.addCommunityNote(u, articleId, content, sourceUrl)
+  }, "Gagal mengirim catatan komunitas.", slug)
 }
 
 export async function deleteCommunityNoteAction(noteId: string, slug: string) {
@@ -76,7 +89,11 @@ export async function createReportAction(
   commentId?: string
 ) {
   return run(
-    (u) => socialService.createReport(u, { reason, details, articleId, commentId }),
+    async (u) => {
+      const limit = checkRateLimit(`report:${u.id}`, { windowMs: 60_000, max: 4 })
+      if (!limit.success) throw new Error(`Terlalu banyak laporan dikirim. Tunggu ${limit.resetInSeconds} detik.`)
+      await socialService.createReport(u, { reason, details, articleId, commentId })
+    },
     "Tidak dapat mengirim laporan."
   )
 }

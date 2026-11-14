@@ -34,11 +34,11 @@ export default function RootLayout({
       suppressHydrationWarning
       className={cn("antialiased", inter.variable, jakarta.variable, "font-sans")}
     >
-      <body>
+      <body className="flex min-h-screen flex-col">
         <ThemeProvider>
           <AdminSidebarProvider>
             <Navbar />
-            <main className="mx-auto w-full max-w-[1600px] px-3.5 py-4 sm:px-6 sm:py-6 lg:px-10 xl:px-12 has-[[data-admin-dashboard]]:max-w-none has-[[data-admin-dashboard]]:p-0">
+            <main className="mx-auto w-full max-w-[1600px] flex-1 px-3.5 py-4 sm:px-6 sm:py-6 lg:px-10 xl:px-12 has-[[data-admin-dashboard]]:max-w-none has-[[data-admin-dashboard]]:p-0">
               {children}
             </main>
             <Footer />

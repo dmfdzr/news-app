@@ -318,6 +318,7 @@ export const socialService = {
       const flat = await prisma.comment.findMany({
         where: { articleId },
         orderBy: { createdAt: "asc" },
+        take: 200,
         select: {
           id: true,
           content: true,
@@ -465,6 +466,14 @@ export const socialService = {
     }
 
     if (isLocalMode) {
+      const existing = localDb.getReports().find(
+        (r) =>
+          r.userId === user.id &&
+          r.status === "PENDING" &&
+          (input.articleId ? r.articleId === input.articleId : r.commentId === input.commentId)
+      )
+      if (existing) throw new ServiceError("Anda sudah melaporkan konten ini dan sedang ditinjau moderator.")
+
       const now = new Date()
       return localDb.createReport({
         id: `rep-${Date.now()}`,
@@ -478,6 +487,16 @@ export const socialService = {
         updatedAt: now,
       })
     }
+
+    const existing = await prisma.report.findFirst({
+      where: {
+        userId: user.id,
+        status: "PENDING",
+        ...(input.articleId ? { articleId: input.articleId } : { commentId: input.commentId }),
+      },
+      select: { id: true },
+    })
+    if (existing) throw new ServiceError("Anda sudah melaporkan konten ini dan sedang ditinjau moderator.")
 
     return prisma.report.create({
       data: {
@@ -494,7 +513,7 @@ export const socialService = {
   async listReports(status?: ReportStatus) {
     if (isLocalMode) {
       const reports = localDb.getReports(status)
-      return reports.map((r) => {
+      return reports.slice(0, 100).map((r) => {
         const reporter = localDb.getUserById(r.userId)
         const article = r.articleId ? localDb.getArticleById(r.articleId) : null
         const comment = r.commentId ? localDb.getCommentById(r.commentId) : null
@@ -511,6 +530,7 @@ export const socialService = {
       prisma.report.findMany({
         where: status ? { status } : undefined,
         orderBy: { createdAt: "desc" },
+        take: 100,
         include: {
           user: { select: { username: true, fullName: true } },
           article: { select: { id: true, title: true, slug: true } },

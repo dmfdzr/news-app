@@ -9,6 +9,7 @@ import { isLocalMode } from "@/lib/env"
 import type { ActionState } from "@/lib/errors"
 import { localDb } from "@/lib/local-db"
 import { invalidateCache } from "@/lib/prisma"
+import { checkRateLimit } from "@/lib/rate-limit"
 import { toUsername } from "@/lib/slug"
 import { createClient } from "@/lib/supabase/server"
 
@@ -37,6 +38,11 @@ export async function signInAction(_: ActionState, formData: FormData): Promise<
   const parsed = credentials.safeParse(Object.fromEntries(formData))
   if (!parsed.success) return { error: parsed.error.issues[0].message }
 
+  const limit = checkRateLimit(`login:${parsed.data.email.toLowerCase()}`, { windowMs: 60_000, max: 5 })
+  if (!limit.success) {
+    return { error: `Terlalu banyak percobaan masuk. Tunggu ${limit.resetInSeconds} detik.` }
+  }
+
   if (isLocalMode) {
     const user = localDb.getUserByEmail(parsed.data.email) ?? localDb.getUserById("user-admin-1")
     if (user) {
@@ -64,6 +70,11 @@ export async function signInAction(_: ActionState, formData: FormData): Promise<
 export async function signUpAction(_: ActionState, formData: FormData): Promise<ActionState> {
   const parsed = registration.safeParse(Object.fromEntries(formData))
   if (!parsed.success) return { error: parsed.error.issues[0].message }
+
+  const limit = checkRateLimit(`signup:${parsed.data.email.toLowerCase()}`, { windowMs: 60_000, max: 3 })
+  if (!limit.success) {
+    return { error: `Terlalu banyak permintaan daftar. Tunggu ${limit.resetInSeconds} detik.` }
+  }
 
   if (isLocalMode) {
     const now = new Date()
