@@ -1,6 +1,9 @@
 import type { Metadata } from "next"
 import { Inter, Plus_Jakarta_Sans } from "next/font/google"
 
+import { Analytics } from "@vercel/analytics/next"
+import { SpeedInsights } from "@vercel/speed-insights/next"
+
 import "./globals.css"
 import { AdminSidebarProvider } from "@/components/admin/admin-sidebar-context"
 import { Footer, Navbar } from "@/components/layout/navbar"
@@ -50,6 +53,8 @@ export default function RootLayout({
             </main>
             <Footer />
             <Toaster richColors />
+            <Analytics />
+            <SpeedInsights />
           </AdminSidebarProvider>
         </ThemeProvider>
       </body>
